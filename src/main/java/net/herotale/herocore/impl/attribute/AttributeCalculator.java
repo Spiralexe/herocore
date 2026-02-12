@@ -111,10 +111,6 @@ public final class AttributeCalculator {
         double armorPercent = vitality * derivation.vitality().armorPercentPerPoint();
         stats.addDerivedModifier(RPGAttribute.ARMOR, armorPercent, ModifierType.PERCENT_ADDITIVE);
 
-        double fallReduction = vitality * derivation.vitality().fallDamageReductionPerPoint();
-        fallReduction = Math.min(fallReduction, derivation.vitality().fallDamageReductionCap());
-        stats.setDerivedBase(RPGAttribute.FALL_DAMAGE_REDUCTION, fallReduction);
-
         // === STRENGTH ===
         double strength = stats.getValue(RPGAttribute.STRENGTH);
         double basePhysicalDamage = strength * derivation.strength().baseAttackDamagePerPoint();
@@ -133,6 +129,10 @@ public final class AttributeCalculator {
 
         double dodgeRating = dexterity * derivation.dexterity().dodgeRatingPerPoint();
         stats.setDerivedBase(RPGAttribute.DODGE_RATING, dodgeRating);
+
+        double fallReduction = dexterity * derivation.dexterity().fallDamageReductionPerPoint();
+        fallReduction = Math.min(fallReduction, derivation.dexterity().fallDamageReductionCap());
+        stats.setDerivedBase(RPGAttribute.FALL_DAMAGE_REDUCTION, fallReduction);
 
         // === INTELLIGENCE ===
         double intelligence = stats.getValue(RPGAttribute.INTELLIGENCE);
@@ -173,6 +173,9 @@ public final class AttributeCalculator {
 
         // === RESOLVE ===
         double resolve = stats.getValue(RPGAttribute.RESOLVE);
+        double resolveHealth = resolve * derivation.resolve().healthPerPoint();
+        stats.addDerivedModifier(RPGAttribute.MAX_HEALTH, resolveHealth, ModifierType.FLAT);
+
         double ccResist = resolve * derivation.resolve().ccResistancePerPoint();
         ccResist = Math.min(ccResist, derivation.resolve().ccResistanceCap());
         stats.setDerivedBase(RPGAttribute.CC_RESISTANCE, ccResist);

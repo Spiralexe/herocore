@@ -218,9 +218,7 @@ public final class CoreConfigLoader {
                 getDouble(vit, "healthBase", 100.0),
                 getDouble(vit, "healthRegenPerPoint", 0.1),
                 getDouble(vit, "healthRegenBase", 1.0),
-                getDouble(vit, "armorPercentPerPoint", 0.002),
-                getDouble(vit, "fallDamageReductionPerPoint", 0.01),
-                getDouble(vit, "fallDamageReductionCap", 0.50)
+                getDouble(vit, "armorPercentPerPoint", 0.002)
             );
 
             JsonObject str = ad != null ? ad.getAsJsonObject("strength") : null;
@@ -233,7 +231,9 @@ public final class CoreConfigLoader {
             CoreConfig.DexterityDerivation dexterity = new CoreConfig.DexterityDerivation(
                 getDouble(dex, "critChancePerPoint", 0.005),
                 getDouble(dex, "attackSpeedPercentPerPoint", 0.01),
-                getDouble(dex, "dodgeRatingPerPoint", 1.0)
+                getDouble(dex, "dodgeRatingPerPoint", 1.0),
+                getDouble(dex, "fallDamageReductionPerPoint", 0.01),
+                getDouble(dex, "fallDamageReductionCap", 0.50)
             );
 
             JsonObject intel = ad != null ? ad.getAsJsonObject("intelligence") : null;
@@ -259,6 +259,7 @@ public final class CoreConfigLoader {
 
             JsonObject res = ad != null ? ad.getAsJsonObject("resolve") : null;
             CoreConfig.ResolveDerivation resolve = new CoreConfig.ResolveDerivation(
+                getDouble(res, "healthPerPoint", 5.0),
                 getDouble(res, "ccResistancePerPoint", 0.01),
                 getDouble(res, "ccResistanceCap", 0.75),
                 getDouble(res, "debuffResistancePerPoint", 0.008),

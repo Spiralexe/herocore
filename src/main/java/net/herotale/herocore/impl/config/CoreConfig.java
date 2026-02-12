@@ -59,9 +59,7 @@ public record CoreConfig(
             double healthBase,
             double healthRegenPerPoint,
             double healthRegenBase,
-            double armorPercentPerPoint,
-            double fallDamageReductionPerPoint,
-            double fallDamageReductionCap
+            double armorPercentPerPoint
     ) {}
 
     public record StrengthDerivation(
@@ -72,7 +70,9 @@ public record CoreConfig(
     public record DexterityDerivation(
             double critChancePerPoint,
             double attackSpeedPercentPerPoint,
-            double dodgeRatingPerPoint
+            double dodgeRatingPerPoint,
+            double fallDamageReductionPerPoint,
+            double fallDamageReductionCap
     ) {}
 
     public record IntelligenceDerivation(
@@ -95,6 +95,7 @@ public record CoreConfig(
     ) {}
 
     public record ResolveDerivation(
+            double healthPerPoint,
             double ccResistancePerPoint,
             double ccResistanceCap,
             double debuffResistancePerPoint,

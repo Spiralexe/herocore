@@ -61,9 +61,7 @@
       "healthBase": 100.0,
       "healthRegenPerPoint": 0.1,
       "healthRegenBase": 1.0,
-      "armorPercentPerPoint": 0.002,
-      "fallDamageReductionPerPoint": 0.01,
-      "fallDamageReductionCap": 0.5
+      "armorPercentPerPoint": 0.002
     },
     "strength": {
       "baseAttackDamagePerPoint": 0.5,
@@ -72,7 +70,9 @@
     "dexterity": {
       "critChancePerPoint": 0.005,
       "attackSpeedPercentPerPoint": 0.01,
-      "dodgeRatingPerPoint": 1.0
+      "dodgeRatingPerPoint": 1.0,
+      "fallDamageReductionPerPoint": 0.01,
+      "fallDamageReductionCap": 0.5
     },
     "intelligence": {
       "spellPowerPercentPerPoint": 0.01,
@@ -92,6 +92,7 @@
       "buffStrengthPercentPerPoint": 0.005
     },
     "resolve": {
+      "healthPerPoint": 5.0,
       "ccResistancePerPoint": 0.01,
       "ccResistanceCap": 0.75,
       "debuffResistancePerPoint": 0.008,
@@ -132,8 +133,6 @@
       "DEBUFF_RESISTANCE": 0.0,
       "THREAT_GENERATION": 1.0,
       "XP_GAIN_MULTIPLIER": 0.0,
-      "REP_GAIN_MULTIPLIER": 0.0,
-      "REP_LOSS_REDUCTION": 0.0,
       "DEATH_PENALTY_REDUCTION": 0.0,
       "FALL_DAMAGE_REDUCTION": 0.0
     }
