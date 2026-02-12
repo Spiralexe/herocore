@@ -1,0 +1,35 @@
+{
+    "Group": "Herotale",
+    "Name": "Herocore",
+    "Version": "0.0.1",
+    "Description": " Attributes, Modifier, Damage, Leveling registr, Status effect registry, Zone modifier registry, CraftingEvent, ProgressionEvent bus, Entity attribute maps (player and non-player), HarvestTier registry ",
+    "Authors": [
+        {
+            "Name": "Kainzo"
+        }
+    ],
+    "Website": "https://herotale.net/",
+    "ServerVersion": "*",
+    "Dependencies": {
+    },
+    "OptionalDependencies": {
+        "net.justmadlime:SimpleParty": "*"
+    },
+    "DisabledByDefault": false,
+    "Main": "net.herotale.herocore.impl.HeroCorePlugin",
+    "IncludesAssetPack": true,
+    "Permissions": [
+        {
+            "node": "herotale.herocore.command.stats",
+            "default": "true",
+            "description": "Access"
+        },
+        {
+            "node": "herotale.herocore.command",
+            "default": "true",
+            "description": "Access"
+        }
+    ]
+}
+
+
