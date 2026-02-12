@@ -102,6 +102,16 @@
       "magicResistPercentPerPoint": 0.003
     }
   },
+  "defenseDerivation": {
+    "physicalResistanceFlatPerVitality": 0.5,
+    "physicalResistancePercentPerVitality": 0.002,
+    "physicalResistancePerLevelPercent": 0.01,
+    "projectileResistanceFlatPerDexterity": 0.3,
+    "projectileResistancePercentPerDexterity": 0.001,
+    "fireResistanceFlatPerResolve": 0.4,
+    "fireResistancePercentPerResolve": 0.0015,
+    "maxResistancePercent": 0.75
+  },
   "attributes": {
     "defaults": {
       "MAX_HEALTH": 0.0,
@@ -134,7 +144,13 @@
       "THREAT_GENERATION": 1.0,
       "XP_GAIN_MULTIPLIER": 0.0,
       "DEATH_PENALTY_REDUCTION": 0.0,
-      "FALL_DAMAGE_REDUCTION": 0.0
+      "FALL_DAMAGE_REDUCTION": 0.0,
+      "PHYSICAL_RESISTANCE": 0.0,
+      "PHYSICAL_RESISTANCE_PERCENT": 0.0,
+      "PROJECTILE_RESISTANCE": 0.0,
+      "PROJECTILE_RESISTANCE_PERCENT": 0.0,
+      "FIRE_RESISTANCE": 0.0,
+      "FIRE_RESISTANCE_PERCENT": 0.0
     }
   }
 }

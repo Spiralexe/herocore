@@ -12,6 +12,7 @@ public record CoreConfig(
         ResourceRegenConfig resourceRegen,
         LevelingConfig leveling,
         AttributeDerivationConfig attributeDerivation,
+        DefenseDerivationConfig defenseDerivation,
         Map<String, Double> attributeDefaults,
         Map<String, Boolean> systemOverrides
 ) {
@@ -103,5 +104,35 @@ public record CoreConfig(
             double threatGenerationPercentPerPoint,
             double staminaRegenPerPoint,
             double magicResistPercentPerPoint
+    ) {}
+
+    /**
+     * Configuration for defense/resistance derivation from primary attributes.
+     * <p>
+     * These values feed into HeroCore's resistance attributes
+     * ({@code PHYSICAL_RESISTANCE}, {@code PROJECTILE_RESISTANCE}, etc.)
+     * which are then synced to Hytale's native {@code ArmorDamageReduction} system
+     * via the {@code DefenseBridge}.
+     * <p>
+     * The {@code physicalResistancePerLevelPercent} field enables additive
+     * defense scaling per player level (e.g. +1% physical resistance per level).
+     */
+    public record DefenseDerivationConfig(
+            /** Flat physical resistance per point of VITALITY. */
+            double physicalResistanceFlatPerVitality,
+            /** Percent physical resistance per point of VITALITY (0.001 = 0.1% per point). */
+            double physicalResistancePercentPerVitality,
+            /** Percent physical resistance bonus per player level (0.01 = 1% per level). */
+            double physicalResistancePerLevelPercent,
+            /** Flat projectile resistance per point of DEXTERITY. */
+            double projectileResistanceFlatPerDexterity,
+            /** Percent projectile resistance per point of DEXTERITY. */
+            double projectileResistancePercentPerDexterity,
+            /** Flat fire resistance per point of RESOLVE. */
+            double fireResistanceFlatPerResolve,
+            /** Percent fire resistance per point of RESOLVE. */
+            double fireResistancePercentPerResolve,
+            /** Maximum percent resistance cap (prevents 100% damage immunity). */
+            double maxResistancePercent
     ) {}
 }

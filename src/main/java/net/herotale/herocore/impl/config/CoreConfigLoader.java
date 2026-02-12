@@ -143,6 +143,10 @@ public final class CoreConfigLoader {
         JsonObject ad = root.getAsJsonObject("attributeDerivation");
         CoreConfig.AttributeDerivationConfig attributeDerivation = parseAttributeDerivation(ad);
 
+        // Defense derivation
+        JsonObject dd = root.getAsJsonObject("defenseDerivation");
+        CoreConfig.DefenseDerivationConfig defenseDerivation = parseDefenseDerivation(dd);
+
         // Attribute defaults
         Map<String, Double> attrDefaults = new HashMap<>();
         if (root.has("attributes")) {
@@ -175,6 +179,7 @@ public final class CoreConfigLoader {
                 resourceRegen,
                 leveling,
                 attributeDerivation,
+                defenseDerivation,
                 attrDefaults,
                 systemOverrides
         );
@@ -200,6 +205,7 @@ public final class CoreConfigLoader {
                         "SOCIAL", 1.0, "ADMIN", 1.0
                 )),
                 defaultAttributeDerivation(),
+                defaultDefenseDerivation(),
                 Map.ofEntries(
                         Map.entry("MAX_HEALTH", 0.0), Map.entry("MAX_MANA", 0.0), Map.entry("MAX_STAMINA", 0.0),
                         Map.entry("HEALTH_REGEN", 1.0), Map.entry("MANA_REGEN", 2.0), Map.entry("STAMINA_REGEN", 5.0),
@@ -282,6 +288,23 @@ public final class CoreConfigLoader {
             private static CoreConfig.AttributeDerivationConfig defaultAttributeDerivation() {
             return parseAttributeDerivation(null);
             }
+
+    private static CoreConfig.DefenseDerivationConfig parseDefenseDerivation(JsonObject dd) {
+        return new CoreConfig.DefenseDerivationConfig(
+                getDouble(dd, "physicalResistanceFlatPerVitality", 0.5),
+                getDouble(dd, "physicalResistancePercentPerVitality", 0.002),
+                getDouble(dd, "physicalResistancePerLevelPercent", 0.01),
+                getDouble(dd, "projectileResistanceFlatPerDexterity", 0.3),
+                getDouble(dd, "projectileResistancePercentPerDexterity", 0.001),
+                getDouble(dd, "fireResistanceFlatPerResolve", 0.4),
+                getDouble(dd, "fireResistancePercentPerResolve", 0.0015),
+                getDouble(dd, "maxResistancePercent", 0.75)
+        );
+    }
+
+    private static CoreConfig.DefenseDerivationConfig defaultDefenseDerivation() {
+        return parseDefenseDerivation(null);
+    }
 
     private static double getDouble(JsonObject obj, String key, double fallback) {
         if (obj != null && obj.has(key)) return obj.get(key).getAsDouble();

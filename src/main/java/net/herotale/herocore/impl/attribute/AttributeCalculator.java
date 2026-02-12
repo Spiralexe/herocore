@@ -25,24 +25,32 @@ public final class AttributeCalculator {
     private final double maxPercentAdditive;
     private final double multiplicativeCap;
     private final CoreConfig.AttributeDerivationConfig derivation;
+    private final CoreConfig.DefenseDerivationConfig defenseDerivation;
 
     public AttributeCalculator(double maxPercentAdditive, double multiplicativeCap,
-                               CoreConfig.AttributeDerivationConfig derivation) {
+                               CoreConfig.AttributeDerivationConfig derivation,
+                               CoreConfig.DefenseDerivationConfig defenseDerivation) {
         this.maxPercentAdditive = maxPercentAdditive;
         this.multiplicativeCap = multiplicativeCap;
         this.derivation = derivation;
+        this.defenseDerivation = defenseDerivation;
+    }
+
+    public AttributeCalculator(double maxPercentAdditive, double multiplicativeCap,
+                               CoreConfig.AttributeDerivationConfig derivation) {
+        this(maxPercentAdditive, multiplicativeCap, derivation, null);
     }
 
     public AttributeCalculator(double maxPercentAdditive, double multiplicativeCap) {
-        this(maxPercentAdditive, multiplicativeCap, null);
+        this(maxPercentAdditive, multiplicativeCap, null, null);
     }
 
     public AttributeCalculator() {
-        this(3.0, 5.0, null);
+        this(3.0, 5.0, null, null);
     }
 
     public boolean hasDerivations() {
-        return derivation != null;
+        return derivation != null || defenseDerivation != null;
     }
 
     /**
@@ -192,5 +200,54 @@ public final class AttributeCalculator {
 
         double magicResistBonus = resolve * derivation.resolve().magicResistPercentPerPoint();
         stats.addDerivedModifier(RPGAttribute.MAGIC_RESIST, magicResistBonus, ModifierType.PERCENT_ADDITIVE);
+
+        // === DEFENSE DERIVATION (Hytale-native resistance attributes) ===
+        computeDefenseDerivedAttributes(stats);
         }
+
+    /**
+     * Derives Hytale-native defense resistance attributes from primary stats.
+     * <p>
+     * These attributes are designed to be synced to Hytale's {@code ArmorDamageReduction}
+     * system via {@code DefenseBridge}. They support both flat (ADDITIVE) and percent
+     * (MULTIPLICATIVE) resistance per {@code DamageCause}.
+     * <p>
+     * Defense values are additive from multiple sources: level progression, gear,
+     * buffs, and primary attribute derivation. The {@code DefenseBridge} converts
+     * the final computed value into Hytale-native {@code StaticModifier}s.
+     */
+    public void computeDefenseDerivedAttributes(StatsComponent stats) {
+        if (defenseDerivation == null) {
+            return;
+        }
+
+        double cap = defenseDerivation.maxResistancePercent();
+
+        // Physical resistance from VITALITY
+        double vitality = stats.getValue(RPGAttribute.VITALITY);
+        double physFlat = vitality * defenseDerivation.physicalResistanceFlatPerVitality();
+        stats.addDerivedModifier(RPGAttribute.PHYSICAL_RESISTANCE, physFlat, ModifierType.FLAT);
+
+        double physPercent = vitality * defenseDerivation.physicalResistancePercentPerVitality();
+        physPercent = Math.min(physPercent, cap);
+        stats.addDerivedModifier(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT, physPercent, ModifierType.FLAT);
+
+        // Projectile resistance from DEXTERITY
+        double dexterity = stats.getValue(RPGAttribute.DEXTERITY);
+        double projFlat = dexterity * defenseDerivation.projectileResistanceFlatPerDexterity();
+        stats.addDerivedModifier(RPGAttribute.PROJECTILE_RESISTANCE, projFlat, ModifierType.FLAT);
+
+        double projPercent = dexterity * defenseDerivation.projectileResistancePercentPerDexterity();
+        projPercent = Math.min(projPercent, cap);
+        stats.addDerivedModifier(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT, projPercent, ModifierType.FLAT);
+
+        // Fire resistance from RESOLVE
+        double resolve = stats.getValue(RPGAttribute.RESOLVE);
+        double fireFlat = resolve * defenseDerivation.fireResistanceFlatPerResolve();
+        stats.addDerivedModifier(RPGAttribute.FIRE_RESISTANCE, fireFlat, ModifierType.FLAT);
+
+        double firePercent = resolve * defenseDerivation.fireResistancePercentPerResolve();
+        firePercent = Math.min(firePercent, cap);
+        stats.addDerivedModifier(RPGAttribute.FIRE_RESISTANCE_PERCENT, firePercent, ModifierType.FLAT);
+    }
 }

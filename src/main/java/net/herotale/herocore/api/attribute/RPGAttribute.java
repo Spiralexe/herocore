@@ -26,6 +26,40 @@ public enum RPGAttribute {
     ARMOR_PENETRATION,
     LIFESTEAL,
 
+    // ── Defense — Hytale-Native Resistance (per DamageCause) ─────────
+    /**
+     * Additive flat resistance to PHYSICAL damage cause.
+     * Synced to Hytale's native {@code ArmorDamageReduction} system via
+     * {@code DefenseBridge}. Formula: {@code damage = max(0, raw - flat) * max(0, 1 - percent)}.
+     */
+    PHYSICAL_RESISTANCE,
+
+    /**
+     * Multiplicative percent resistance to PHYSICAL damage cause (0.0–1.0).
+     * A value of 0.3 means 30% damage reduction applied after flat resistance.
+     */
+    PHYSICAL_RESISTANCE_PERCENT,
+
+    /**
+     * Additive flat resistance to PROJECTILE damage cause.
+     */
+    PROJECTILE_RESISTANCE,
+
+    /**
+     * Multiplicative percent resistance to PROJECTILE damage cause (0.0–1.0).
+     */
+    PROJECTILE_RESISTANCE_PERCENT,
+
+    /**
+     * Additive flat resistance to FIRE damage cause.
+     */
+    FIRE_RESISTANCE,
+
+    /**
+     * Multiplicative percent resistance to FIRE damage cause (0.0–1.0).
+     */
+    FIRE_RESISTANCE_PERCENT,
+
     // ── Combat — Magical ────────────────────────────────────────────────
     SPELL_POWER,
     SPELL_CRIT_CHANCE,
