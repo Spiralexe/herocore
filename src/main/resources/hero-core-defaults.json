@@ -65,7 +65,8 @@
     },
     "strength": {
       "baseAttackDamagePerPoint": 0.5,
-      "blockStrengthPerPoint": 2.0
+      "blockStrengthPerPoint": 2.0,
+      "shieldStrengthPerPoint": 3.0
     },
     "dexterity": {
       "critChancePerPoint": 0.005,
@@ -88,7 +89,6 @@
       "manaRegenPerPoint": 0.15,
       "manaRegenBase": 0.5,
       "healCritChancePerPoint": 0.003,
-      "shieldStrengthPerPoint": 3.0,
       "buffStrengthPercentPerPoint": 0.005
     },
     "resolve": {

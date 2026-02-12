@@ -64,7 +64,8 @@ public record CoreConfig(
 
     public record StrengthDerivation(
             double baseAttackDamagePerPoint,
-            double blockStrengthPerPoint
+            double blockStrengthPerPoint,
+            double shieldStrengthPerPoint
     ) {}
 
     public record DexterityDerivation(
@@ -90,7 +91,6 @@ public record CoreConfig(
             double manaRegenPerPoint,
             double manaRegenBase,
             double healCritChancePerPoint,
-            double shieldStrengthPerPoint,
             double buffStrengthPercentPerPoint
     ) {}
 

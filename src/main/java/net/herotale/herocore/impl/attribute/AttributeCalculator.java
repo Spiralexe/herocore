@@ -119,6 +119,9 @@ public final class AttributeCalculator {
         double blockStrength = strength * derivation.strength().blockStrengthPerPoint();
         stats.setDerivedBase(RPGAttribute.BLOCK_STRENGTH, blockStrength);
 
+        double shieldStrength = strength * derivation.strength().shieldStrengthPerPoint();
+        stats.setDerivedBase(RPGAttribute.SHIELD_STRENGTH, shieldStrength);
+
         // === DEXTERITY ===
         double dexterity = stats.getValue(RPGAttribute.DEXTERITY);
         double physCritChance = dexterity * derivation.dexterity().critChancePerPoint();
@@ -164,9 +167,6 @@ public final class AttributeCalculator {
 
         double healCritChance = faith * derivation.faith().healCritChancePerPoint();
         stats.setDerivedBase(RPGAttribute.HEAL_CRIT_CHANCE, healCritChance);
-
-        double shieldStrength = faith * derivation.faith().shieldStrengthPerPoint();
-        stats.setDerivedBase(RPGAttribute.SHIELD_STRENGTH, shieldStrength);
 
         double buffStrength = faith * derivation.faith().buffStrengthPercentPerPoint();
         stats.setDerivedBase(RPGAttribute.BUFF_STRENGTH, buffStrength);

@@ -224,7 +224,8 @@ public final class CoreConfigLoader {
             JsonObject str = ad != null ? ad.getAsJsonObject("strength") : null;
             CoreConfig.StrengthDerivation strength = new CoreConfig.StrengthDerivation(
                 getDouble(str, "baseAttackDamagePerPoint", 0.5),
-                getDouble(str, "blockStrengthPerPoint", 2.0)
+                getDouble(str, "blockStrengthPerPoint", 2.0),
+                getDouble(str, "shieldStrengthPerPoint", 3.0)
             );
 
             JsonObject dex = ad != null ? ad.getAsJsonObject("dexterity") : null;
@@ -253,7 +254,6 @@ public final class CoreConfigLoader {
                 getDouble(faith, "manaRegenPerPoint", 0.15),
                 getDouble(faith, "manaRegenBase", 0.5),
                 getDouble(faith, "healCritChancePerPoint", 0.003),
-                getDouble(faith, "shieldStrengthPerPoint", 3.0),
                 getDouble(faith, "buffStrengthPercentPerPoint", 0.005)
             );
 
