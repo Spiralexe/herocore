@@ -1,7 +1,7 @@
 {
     "Group": "Herotale",
     "Name": "Herocore",
-    "Version": "0.0.1",
+    "Version": "0.1.0",
     "Description": " Attributes, Modifier, Damage, Leveling registr, Status effect registry, Zone modifier registry, CraftingEvent, ProgressionEvent bus, Entity attribute maps (player and non-player), HarvestTier registry ",
     "Authors": [
         {

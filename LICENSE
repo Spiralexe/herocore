@@ -1,24 +1,15 @@
-This is free and unencumbered software released into the public domain.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software only for non-commercial purposes, subject to the following conditions:Non-Commercial Use Only
+The Software may only be used for non-commercial purposes. "Non-commercial purposes" means personal use, educational use, academic research, hobby projects, non-profit organization activities, or any other purpose where no money or other form of compensation (direct or indirect) is charged or received in connection with the use, distribution, or availability of the Software or any derivative works.
+Prohibited activities include (but are not limited to):  Selling, renting, leasing, licensing, or charging any fee for the Software or any modified version.  
+Using the Software as part of a commercial product, service, or offering (including SaaS, hosted services, plugins/add-ons sold commercially, or inclusion in any paid app/website).  
+Incorporating the Software into any product or service that generates revenue or is intended for commercial advantage.  
+Using the Software in any advertising-supported or sponsored context where revenue is derived.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
-
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
-For more information, please refer to <https://unlicense.org>
+Source Code Availability
+If you distribute the Software or any modifications/derivative works (in source or binary form), you must provide the complete corresponding source code under this same license, free of charge, and include this license text in full.
+Attribution and Notice Preservation
+All copies or substantial portions of the Software must include the above copyright notice, this permission notice, and the full text of this license.
+No Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Termination
+Any use in violation of the non-commercial restriction immediately terminates this license for the violating party. The licensor may also terminate this license at any time for any reason.
