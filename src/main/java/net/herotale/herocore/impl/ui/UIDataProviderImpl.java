@@ -9,6 +9,7 @@ import net.herotale.herocore.api.leveling.LevelingProfile;
 import net.herotale.herocore.api.leveling.LevelingRegistry;
 import net.herotale.herocore.api.resource.ResourceType;
 import net.herotale.herocore.api.status.StatusEffect;
+import net.herotale.herocore.api.ui.DefenseCategory;
 import net.herotale.herocore.api.ui.UIDataProvider;
 
 import java.util.Collection;
@@ -84,6 +85,26 @@ public class UIDataProviderImpl implements UIDataProvider {
     }
 
     @Override
+    public double getDefensePercent(UUID entityUUID, DefenseCategory category) {
+        StatsComponent stats = statsProvider.apply(entityUUID);
+        if (stats == null) return 0.0;
+
+        double value = switch (category) {
+            case PHYSICAL_DEFENSE -> stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT);
+            case MAGICAL_DEFENSE -> stats.getValue(RPGAttribute.MAGIC_RESIST);
+            case PROJECTILE_RESISTANCE -> stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT);
+            case ELEMENTAL_FIRE -> preferPercent(stats.getValue(RPGAttribute.FIRE_RESISTANCE_PERCENT),
+                    stats.getValue(RPGAttribute.ELEMENTAL_RESIST_FIRE));
+            case ELEMENTAL_FROST -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ICE);
+            case ELEMENTAL_LIGHTNING -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_LIGHTNING);
+            case ELEMENTAL_POISON -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_POISON);
+            case ELEMENTAL_ARCANE -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ARCANE);
+        };
+
+        return normalizePercent(value);
+    }
+
+    @Override
     public int getLevel(UUID entityUUID, String profileId) {
         return levelingRegistry.getLevel(entityUUID, profileId);
     }
@@ -136,5 +157,15 @@ public class UIDataProviderImpl implements UIDataProvider {
     public long getCombatTimeoutRemaining(UUID entityUUID) {
         CombatStateComponent combat = combatProvider.apply(entityUUID);
         return combat != null ? combat.getCombatTimeoutRemaining() : 0;
+    }
+
+    private static double preferPercent(double primary, double fallback) {
+        return primary > 0.0 ? primary : fallback;
+    }
+
+    private static double normalizePercent(double value) {
+        if (value <= 0.0) return 0.0;
+        double normalized = value > 1.0 ? value / 100.0 : value;
+        return Math.max(0.0, Math.min(1.0, normalized));
     }
 }

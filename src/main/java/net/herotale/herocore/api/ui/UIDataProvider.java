@@ -55,6 +55,13 @@ public interface UIDataProvider {
     double getAttributeValue(UUID entityUUID, RPGAttribute attribute);
 
     /**
+     * Get a defense/resistance percentage (0..1) for UI display.
+     * <p>
+     * This is a HeroCore-only view and does not alter vanilla Hytale behavior.
+     */
+    double getDefensePercent(UUID entityUUID, DefenseCategory category);
+
+    /**
      * Get the current level for a leveling profile.
      */
     int getLevel(UUID entityUUID, String profileId);

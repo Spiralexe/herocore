@@ -252,6 +252,104 @@ Control how secondary attributes scale from primaries:
 }
 ```
 
+### Defense Implementation Guide
+
+HeroCore Defense is a **dual-layer system**:
+
+- **Vanilla Layer:** Hytale continues to calculate and display **Physical Defense only** in the tab menu.
+- **HeroCore Layer:** Your RPG UI can display a detailed, percentage-based breakdown of defense and resistances.
+
+This design preserves Hytale's native mechanics while exposing richer RPG stats in the Hero Attributes UI.
+
+#### Step 1 — Configure Defense Derivation
+
+Add a `defenseDerivation` block in `mods/herocore/config.json`. These values determine how primaries feed resistance.
+
+```json
+{
+  "defenseDerivation": {
+    "physicalResistanceFlatPerVitality": 0.5,
+    "physicalResistancePercentPerVitality": 0.002,
+    "physicalResistancePerLevelPercent": 0.01,
+    "projectileResistanceFlatPerDexterity": 0.3,
+    "projectileResistancePercentPerDexterity": 0.001,
+    "fireResistanceFlatPerResolve": 0.4,
+    "fireResistancePercentPerResolve": 0.0015,
+    "maxResistancePercent": 0.75
+  }
+}
+```
+
+#### Step 2 — Internal Defense Naming Convention
+
+Use these canonical categories in UI and logs:
+
+- **PhysicalDefense** → `PHYSICAL_RESISTANCE_PERCENT`
+- **MagicalDefense** → `MAGIC_RESIST`
+- **ProjectileResistance** → `PROJECTILE_RESISTANCE_PERCENT`
+- **ElementalResistance.Fire** → `FIRE_RESISTANCE_PERCENT` (fallback: `ELEMENTAL_RESIST_FIRE`)
+- **ElementalResistance.Frost** → `ELEMENTAL_RESIST_ICE`
+- **ElementalResistance.Lightning** → `ELEMENTAL_RESIST_LIGHTNING`
+- **ElementalResistance.Poison** → `ELEMENTAL_RESIST_POISON`
+- **ElementalResistance.Arcane** → `ELEMENTAL_RESIST_ARCANE`
+
+These names are HeroCore-facing and do **not** alter vanilla Hytale behavior.
+
+#### Step 3 — Apply the Defense Bridge (Vanilla Compatibility)
+
+Whenever your entity's `StatsComponent` changes (level up, gear swap, buff applied), call `DefenseBridge.apply(stats)`:
+
+```java
+import net.herotale.herocore.impl.bridge.DefenseBridge;
+
+DefenseBridge defenseBridge = new DefenseBridge(playerId);
+defenseBridge.apply(stats);
+```
+
+This syncs resistance values into Hytale's native ECS stat system. Hytale's built-in damage pipeline still owns the final mitigation.
+
+#### Step 4 — Display Percent Values in Hero Attributes UI
+
+Use the `UIDataProvider` defense API to retrieve **percentage-based** values (0.0–1.0) and format them as %:
+
+```java
+import net.herotale.herocore.api.ui.DefenseCategory;
+
+double phys = uiData.getDefensePercent(playerId, DefenseCategory.PHYSICAL_DEFENSE);
+double magic = uiData.getDefensePercent(playerId, DefenseCategory.MAGICAL_DEFENSE);
+double fire = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_FIRE);
+
+String physText = String.format("Physical Defense: %.0f%%", phys * 100.0);
+String fireText = String.format("Fire Resistance: %.0f%%", fire * 100.0);
+```
+
+#### Step 5 — Level-Based Defense
+
+Level bonuses should be **additive modifiers** applied to the resistance percent attributes:
+
+```java
+stats.addModifier(AttributeModifier.builder()
+    .id("herocore:level_defense_phys_pct")
+    .attribute(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT)
+    .value(level * config.defenseDerivation().physicalResistancePerLevelPercent())
+    .type(ModifierType.FLAT)
+    .source(ModifierSource.of("herocore:level_defense"))
+    .build());
+```
+
+#### Step 6 — Gear and Buffs
+
+Gear and buffs can target the same resistance attributes. Because these are HeroCore modifiers, they stack naturally:
+
+- **Flat resistance**: `PHYSICAL_RESISTANCE`, `PROJECTILE_RESISTANCE`, `FIRE_RESISTANCE`
+- **Percent resistance**: `PHYSICAL_RESISTANCE_PERCENT`, `PROJECTILE_RESISTANCE_PERCENT`, `FIRE_RESISTANCE_PERCENT`
+
+#### Step 7 — Armor (Dormant Hook)
+
+The `ARMOR` attribute exists as a **future-proof hook**. It is not wired into mitigation yet, but is stored and modifier-ready. You can safely expose it in gear or UI now and integrate it later without breaking the architecture.
+
+---
+
 ### Damage System
 
 ```json
