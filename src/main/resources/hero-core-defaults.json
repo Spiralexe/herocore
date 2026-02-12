@@ -103,10 +103,10 @@
   },
   "attributes": {
     "defaults": {
-      "MAX_HEALTH": 100.0,
+      "MAX_HEALTH": 0.0,
       "MAX_MANA": 0.0,
-      "MAX_STAMINA": 100.0,
-      "MAX_OXYGEN": 100.0,
+      "MAX_STAMINA": 0.0,
+      "MAX_OXYGEN": 0.0,
       "MAX_AMMO": 0.0,
       "HEALTH_REGEN": 1.0,
       "MANA_REGEN": 2.0,

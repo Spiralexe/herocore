@@ -6,7 +6,10 @@ import com.google.gson.JsonObject;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -18,24 +21,69 @@ public final class CoreConfigLoader {
 
     private static final Logger LOG = Logger.getLogger(CoreConfigLoader.class.getName());
     private static final String RESOURCE_PATH = "/hero-core-defaults.json";
+    private static final Path DEFAULT_CONFIG_PATH = Path.of("mods", "herocore", "config.json");
 
     private CoreConfigLoader() {}
 
     /**
-     * Load the config from classpath. Falls back to sensible defaults on failure.
+     * Load the config from disk; if missing, copy defaults to disk then load.
      */
     public static CoreConfig load() {
+        if (Files.exists(DEFAULT_CONFIG_PATH)) {
+            return loadFromFile(DEFAULT_CONFIG_PATH);
+        }
+
+        if (copyDefaultsToDisk(DEFAULT_CONFIG_PATH)) {
+            return loadFromFile(DEFAULT_CONFIG_PATH);
+        }
+
+        return loadFromResourceOrFallback();
+    }
+
+    private static CoreConfig loadFromFile(Path path) {
+        try (InputStream is = Files.newInputStream(path)) {
+            return parseFromReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse config at " + path + ": " + e.getMessage() + ". Using built-in defaults.");
+            return loadFromResourceOrFallback();
+        }
+    }
+
+    private static CoreConfig loadFromResourceOrFallback() {
         try (InputStream is = CoreConfigLoader.class.getResourceAsStream(RESOURCE_PATH)) {
             if (is == null) {
                 LOG.warning("hero-core-defaults.json not found on classpath. Using built-in defaults.");
                 return fallback();
             }
-            JsonObject root = new Gson().fromJson(new InputStreamReader(is, StandardCharsets.UTF_8), JsonObject.class);
-            return parse(root);
+            return parseFromReader(new InputStreamReader(is, StandardCharsets.UTF_8));
         } catch (Exception e) {
             LOG.warning("Failed to parse hero-core-defaults.json: " + e.getMessage() + ". Using built-in defaults.");
             return fallback();
         }
+    }
+
+    private static boolean copyDefaultsToDisk(Path path) {
+        try (InputStream is = CoreConfigLoader.class.getResourceAsStream(RESOURCE_PATH)) {
+            if (is == null) {
+                LOG.warning("hero-core-defaults.json not found on classpath. Cannot generate config file.");
+                return false;
+            }
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.copy(is, path);
+            LOG.info("Generated default config at " + path + ".");
+            return true;
+        } catch (Exception e) {
+            LOG.warning("Failed to write default config at " + path + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static CoreConfig parseFromReader(Reader reader) {
+        JsonObject root = new Gson().fromJson(reader, JsonObject.class);
+        return parse(root);
     }
 
     private static CoreConfig parse(JsonObject root) {
@@ -153,7 +201,7 @@ public final class CoreConfigLoader {
                 )),
                 defaultAttributeDerivation(),
                 Map.ofEntries(
-                        Map.entry("MAX_HEALTH", 100.0), Map.entry("MAX_MANA", 50.0), Map.entry("MAX_STAMINA", 100.0),
+                        Map.entry("MAX_HEALTH", 0.0), Map.entry("MAX_MANA", 0.0), Map.entry("MAX_STAMINA", 0.0),
                         Map.entry("HEALTH_REGEN", 1.0), Map.entry("MANA_REGEN", 2.0), Map.entry("STAMINA_REGEN", 5.0),
                         Map.entry("MOVE_SPEED", 1.0), Map.entry("ATTACK_SPEED", 1.0), Map.entry("MINING_SPEED", 1.0),
                         Map.entry("CRIT_CHANCE", 0.05), Map.entry("CRIT_DAMAGE_MULTIPLIER", 1.5),
