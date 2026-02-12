@@ -298,6 +298,10 @@ public final class CoreConfigLoader {
                 getDouble(dd, "projectileResistancePercentPerDexterity", 0.001),
                 getDouble(dd, "fireResistanceFlatPerResolve", 0.4),
                 getDouble(dd, "fireResistancePercentPerResolve", 0.0015),
+                getDouble(dd, "iceResistancePercentPerIntelligence", 0.001),
+                getDouble(dd, "lightningResistancePercentPerIntelligence", 0.001),
+                getDouble(dd, "poisonResistancePercentPerResolve", 0.001),
+                getDouble(dd, "arcaneResistancePercentPerIntelligence", 0.001),
                 getDouble(dd, "maxResistancePercent", 0.75)
         );
     }

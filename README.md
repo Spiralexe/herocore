@@ -252,18 +252,15 @@ Control how secondary attributes scale from primaries:
 }
 ```
 
-### Defense Implementation Guide
+### Defense & Combat Implementation Guide for Heroes
 
-HeroCore Defense is a **dual-layer system**:
+This guide walks through setting up HeroCore's defense/resistance system and level-based damage scaling in your Heroes RPG plugin.
 
-- **Vanilla Layer:** Hytale continues to calculate and display **Physical Defense only** in the tab menu.
-- **HeroCore Layer:** Your RPG UI can display a detailed, percentage-based breakdown of defense and resistances.
+---
 
-This design preserves Hytale's native mechanics while exposing richer RPG stats in the Hero Attributes UI.
+#### Part 1: Configure Defense Derivation
 
-#### Step 1 — Configure Defense Derivation
-
-Add a `defenseDerivation` block in `mods/herocore/config.json`. These values determine how primaries feed resistance.
+HeroCore derives resistance values from primary attributes. Configure `mods/herocore/config.json`:
 
 ```json
 {
@@ -275,78 +272,368 @@ Add a `defenseDerivation` block in `mods/herocore/config.json`. These values det
     "projectileResistancePercentPerDexterity": 0.001,
     "fireResistanceFlatPerResolve": 0.4,
     "fireResistancePercentPerResolve": 0.0015,
+    "iceResistancePercentPerIntelligence": 0.001,
+    "lightningResistancePercentPerIntelligence": 0.001,
+    "poisonResistancePercentPerResolve": 0.001,
+    "arcaneResistancePercentPerIntelligence": 0.001,
     "maxResistancePercent": 0.75
   }
 }
 ```
 
-#### Step 2 — Internal Defense Naming Convention
+**What this does:**
+- **Vitality** → Physical resistance (flat + percent)
+- **Dexterity** → Projectile resistance (flat + percent)
+- **Resolve** → Fire & Poison resistance (percent)
+- **Intelligence** → Ice, Lightning, Arcane resistance (percent)
+- All percent resistances capped at 75% to prevent immunity
 
-Use these canonical categories in UI and logs:
+---
 
-- **PhysicalDefense** → `PHYSICAL_RESISTANCE_PERCENT`
-- **MagicalDefense** → `MAGIC_RESIST`
-- **ProjectileResistance** → `PROJECTILE_RESISTANCE_PERCENT`
-- **ElementalResistance.Fire** → `FIRE_RESISTANCE_PERCENT` (fallback: `ELEMENTAL_RESIST_FIRE`)
-- **ElementalResistance.Frost** → `ELEMENTAL_RESIST_ICE`
-- **ElementalResistance.Lightning** → `ELEMENTAL_RESIST_LIGHTNING`
-- **ElementalResistance.Poison** → `ELEMENTAL_RESIST_POISON`
-- **ElementalResistance.Arcane** → `ELEMENTAL_RESIST_ARCANE`
+#### Part 2: Dual-Layer Defense Architecture
 
-These names are HeroCore-facing and do **not** alter vanilla Hytale behavior.
+HeroCore uses a **dual-layer** defense model:
 
-#### Step 3 — Apply the Defense Bridge (Vanilla Compatibility)
+| Layer | Scope | Display |
+|---|---|---|
+| **Vanilla Layer** | Physical Defense only | Hytale tab menu (vanilla "Defense" stat) |
+| **HeroCore Layer** | All resistances | Heroes UI / character sheet |
 
-Whenever your entity's `StatsComponent` changes (level up, gear swap, buff applied), call `DefenseBridge.apply(stats)`:
+**Why?** Hytale's tab menu only shows Physical Defense. HeroCore preserves this while adding detailed resistance tracking for your custom UI.
+
+**Key Rules:**
+- **Physical mitigation** → Handled by Hytale's native `ArmorDamageReduction` system
+- **All other resistances** → Handled by HeroCore's `ResistanceMitigationSystem`
+- Use `DefenseBridge` to sync Physical resistance to Hytale native for tab display only
+
+---
+
+#### Part 3: Apply Defense Bridge (Physical Only)
+
+Call `DefenseBridge.apply()` whenever a player's stats change:
 
 ```java
 import net.herotale.herocore.impl.bridge.DefenseBridge;
+import net.herotale.herocore.api.component.StatsComponent;
 
-DefenseBridge defenseBridge = new DefenseBridge(playerId);
-defenseBridge.apply(stats);
+public class HeroesPlayerService {
+    
+    public void onLevelUp(UUID playerId, int newLevel) {
+        StatsComponent stats = getStatsComponent(playerId);
+        
+        // 1. Update base primaries from class/level progression
+        stats.setBase(RPGAttribute.VITALITY, getVitalityForLevel(newLevel));
+        stats.setBase(RPGAttribute.DEXTERITY, getDexterityForLevel(newLevel));
+        // ... other primaries
+        
+        // 2. Apply level-based defense modifiers (see Part 4)
+        applyLevelDefenseModifiers(stats, newLevel);
+        
+        // 3. Sync Physical resistance to Hytale native (tab menu display)
+        DefenseBridge bridge = new DefenseBridge(playerId);
+        bridge.apply(stats);
+    }
+    
+    public void onEquipGear(UUID playerId, ItemStack gear) {
+        StatsComponent stats = getStatsComponent(playerId);
+        
+        // Add gear modifiers
+        stats.addModifier(AttributeModifier.builder()
+            .id("gear:" + gear.getId() + ":physical_resist")
+            .attribute(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT)
+            .value(0.05) // +5% physical resist
+            .type(ModifierType.FLAT)
+            .source(ModifierSource.of("gear:" + gear.getId()))
+            .build());
+        
+        // Re-sync to native
+        new DefenseBridge(playerId).apply(stats);
+    }
+}
 ```
 
-This syncs resistance values into Hytale's native ECS stat system. Hytale's built-in damage pipeline still owns the final mitigation.
+**When to call `DefenseBridge.apply()`:**
+- Player levels up
+- Primary attributes change (stat point allocation, talent bonuses)
+- Gear equipped/unequipped
+- Buff applied/removed
+- Class change
 
-#### Step 4 — Display Percent Values in Hero Attributes UI
+---
 
-Use the `UIDataProvider` defense API to retrieve **percentage-based** values (0.0–1.0) and format them as %:
+#### Part 4: Level-Based Defense Scaling
+
+Add **per-level** defense bonuses using additive modifiers:
 
 ```java
+import net.herotale.herocore.api.attribute.AttributeModifier;
+import net.herotale.herocore.api.attribute.ModifierSource;
+import net.herotale.herocore.api.attribute.ModifierType;
+import net.herotale.herocore.api.attribute.RPGAttribute;
+
+public void applyLevelDefenseModifiers(StatsComponent stats, int level) {
+    CoreConfig config = HeroCorePlugin.get().getConfig();
+    
+    // Physical Defense: +1% per level (config: physicalResistancePerLevelPercent = 0.01)
+    double physDefense = level * config.defenseDerivation().physicalResistancePerLevelPercent();
+    stats.addModifier(AttributeModifier.builder()
+        .id("herocore:level_defense_physical")
+        .attribute(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT)
+        .value(physDefense)
+        .type(ModifierType.FLAT)
+        .source(ModifierSource.of("herocore:level_scaling"))
+        .persistent(false) // Re-applied on login
+        .build());
+    
+    // Optional: Add level-based bonuses for other resistances
+    // Example: +0.5% fire resist per level
+    double fireDefense = level * 0.005;
+    stats.addModifier(AttributeModifier.builder()
+        .id("herocore:level_defense_fire")
+        .attribute(RPGAttribute.FIRE_RESISTANCE_PERCENT)
+        .value(fireDefense)
+        .type(ModifierType.FLAT)
+        .source(ModifierSource.of("herocore:level_scaling"))
+        .persistent(false)
+        .build());
+}
+```
+
+**Remove old modifiers before re-applying:**
+
+```java
+// Before applying new level-based modifiers, remove old ones
+stats.removeModifier("herocore:level_defense_physical");
+stats.removeModifier("herocore:level_defense_fire");
+// ... then addModifier as shown above
+```
+
+---
+
+#### Part 5: Display Resistances in Heroes UI
+
+Use `UIDataProvider` to fetch percent values for your UI:
+
+```java
+import net.herotale.herocore.api.ui.UIDataProvider;
 import net.herotale.herocore.api.ui.DefenseCategory;
 
-double phys = uiData.getDefensePercent(playerId, DefenseCategory.PHYSICAL_DEFENSE);
-double magic = uiData.getDefensePercent(playerId, DefenseCategory.MAGICAL_DEFENSE);
-double fire = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_FIRE);
-
-String physText = String.format("Physical Defense: %.0f%%", phys * 100.0);
-String fireText = String.format("Fire Resistance: %.0f%%", fire * 100.0);
+public class HeroesCharacterSheetUI {
+    
+    private final UIDataProvider uiData;
+    
+    public void renderDefenseStats(UUID playerId) {
+        // Fetch percent values (0.0–1.0)
+        double physicalDef = uiData.getDefensePercent(playerId, DefenseCategory.PHYSICAL_DEFENSE);
+        double magicalDef = uiData.getDefensePercent(playerId, DefenseCategory.MAGICAL_DEFENSE);
+        double projectileDef = uiData.getDefensePercent(playerId, DefenseCategory.PROJECTILE_RESISTANCE);
+        double fireDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_FIRE);
+        double iceDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_FROST);
+        double lightningDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_LIGHTNING);
+        double poisonDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_POISON);
+        double arcaneDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_ARCANE);
+        
+        // Format as percentages
+        String physText = String.format("Physical Defense: %.1f%%", physicalDef * 100.0);
+        String fireText = String.format("Fire Resistance: %.1f%%", fireDef * 100.0);
+        
+        // Display in UI...
+    }
+}
 ```
 
-#### Step 5 — Level-Based Defense
+**Attribute → UI Category Mapping:**
 
-Level bonuses should be **additive modifiers** applied to the resistance percent attributes:
+| DefenseCategory | Primary RPGAttribute | Legacy Fallback |
+|---|---|---|
+| `PHYSICAL_DEFENSE` | `PHYSICAL_RESISTANCE_PERCENT` | — |
+| `MAGICAL_DEFENSE` | `MAGIC_RESIST` | — |
+| `PROJECTILE_RESISTANCE` | `PROJECTILE_RESISTANCE_PERCENT` | — |
+| `ELEMENTAL_FIRE` | `FIRE_RESISTANCE_PERCENT` | `ELEMENTAL_RESIST_FIRE` |
+| `ELEMENTAL_FROST` | `ICE_RESISTANCE_PERCENT` | `ELEMENTAL_RESIST_ICE` |
+| `ELEMENTAL_LIGHTNING` | `LIGHTNING_RESISTANCE_PERCENT` | `ELEMENTAL_RESIST_LIGHTNING` |
+| `ELEMENTAL_POISON` | `POISON_RESISTANCE_PERCENT` | `ELEMENTAL_RESIST_POISON` |
+| `ELEMENTAL_ARCANE` | `ARCANE_RESISTANCE_PERCENT` | `ELEMENTAL_RESIST_ARCANE` |
+
+---
+
+#### Part 6: Level-Based Damage Scaling
+
+Add **per-level** attack damage bonuses:
 
 ```java
+public void applyLevelDamageModifiers(StatsComponent stats, int level) {
+    // Example: +2% attack damage per level
+    double damageBonus = level * 0.02;
+    
+    stats.addModifier(AttributeModifier.builder()
+        .id("herocore:level_damage_bonus")
+        .attribute(RPGAttribute.ATTACK_DAMAGE)
+        .value(damageBonus)
+        .type(ModifierType.PERCENT_ADDITIVE)
+        .source(ModifierSource.of("herocore:level_scaling"))
+        .persistent(false)
+        .build());
+    
+    // For spell casters: scale spell power
+    double spellPowerBonus = level * 0.015;
+    stats.addModifier(AttributeModifier.builder()
+        .id("herocore:level_spell_power_bonus")
+        .attribute(RPGAttribute.SPELL_POWER)
+        .value(spellPowerBonus)
+        .type(ModifierType.PERCENT_ADDITIVE)
+        .source(ModifierSource.of("herocore:level_scaling"))
+        .persistent(false)
+        .build());
+}
+```
+
+**Apply on level-up:**
+
+```java
+public void onLevelUp(UUID playerId, int newLevel) {
+    StatsComponent stats = getStatsComponent(playerId);
+    
+    // Remove old scaling modifiers
+    stats.removeModifier("herocore:level_damage_bonus");
+    stats.removeModifier("herocore:level_spell_power_bonus");
+    stats.removeModifier("herocore:level_defense_physical");
+    
+    // Re-apply with new level values
+    applyLevelDamageModifiers(stats, newLevel);
+    applyLevelDefenseModifiers(stats, newLevel);
+    
+    // Sync to native
+    new DefenseBridge(playerId).apply(stats);
+}
+```
+
+---
+
+#### Part 7: Gear & Buff Modifiers
+
+Stack resistance/damage modifiers from gear and buffs naturally:
+
+```java
+// Armor piece: +8% physical resistance, +15 flat physical resistance
 stats.addModifier(AttributeModifier.builder()
-    .id("herocore:level_defense_phys_pct")
+    .id("gear:iron_chestplate:phys_pct")
     .attribute(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT)
-    .value(level * config.defenseDerivation().physicalResistancePerLevelPercent())
+    .value(0.08)
     .type(ModifierType.FLAT)
-    .source(ModifierSource.of("herocore:level_defense"))
+    .source(ModifierSource.of("gear:iron_chestplate"))
+    .build());
+
+stats.addModifier(AttributeModifier.builder()
+    .id("gear:iron_chestplate:phys_flat")
+    .attribute(RPGAttribute.PHYSICAL_RESISTANCE)
+    .value(15.0)
+    .type(ModifierType.FLAT)
+    .source(ModifierSource.of("gear:iron_chestplate"))
+    .build());
+
+// Buff: +20% fire resistance for 60 seconds
+stats.addModifier(AttributeModifier.builder()
+    .id("buff:fire_ward")
+    .attribute(RPGAttribute.FIRE_RESISTANCE_PERCENT)
+    .value(0.20)
+    .type(ModifierType.FLAT)
+    .source(ModifierSource.of("buff:fire_ward"))
+    .duration(60_000) // 60 seconds
     .build());
 ```
 
-#### Step 6 — Gear and Buffs
+**All modifiers stack according to HeroCore's formula:**
 
-Gear and buffs can target the same resistance attributes. Because these are HeroCore modifiers, they stack naturally:
+```
+FinalValue = (Base + Σ FLAT) * (1 + Σ PERCENT_ADDITIVE) * Π(1 + each PERCENT_MULTIPLICATIVE)
+```
 
-- **Flat resistance**: `PHYSICAL_RESISTANCE`, `PROJECTILE_RESISTANCE`, `FIRE_RESISTANCE`
-- **Percent resistance**: `PHYSICAL_RESISTANCE_PERCENT`, `PROJECTILE_RESISTANCE_PERCENT`, `FIRE_RESISTANCE_PERCENT`
+---
 
-#### Step 7 — Armor (Dormant Hook)
+#### Part 8: Class-Specific Resistance Bonuses
 
-The `ARMOR` attribute exists as a **future-proof hook**. It is not wired into mitigation yet, but is stored and modifier-ready. You can safely expose it in gear or UI now and integrate it later without breaking the architecture.
+Add class-specific baseline resistances:
+
+```java
+public enum HeroesClass {
+    WARRIOR(0.10, 0.05), // 10% phys, 5% fire
+    MAGE(0.02, 0.15),    // 2% phys, 15% arcane
+    ROGUE(0.05, 0.08);   // 5% phys, 8% poison
+    
+    private final double physicalResist;
+    private final double elementalResist;
+    
+    // ...
+}
+
+public void applyClassBonuses(StatsComponent stats, HeroesClass heroClass) {
+    stats.addModifier(AttributeModifier.builder()
+        .id("class:" + heroClass.name().toLowerCase() + ":phys_resist")
+        .attribute(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT)
+        .value(heroClass.getPhysicalResist())
+        .type(ModifierType.FLAT)
+        .source(ModifierSource.of("class:" + heroClass.name().toLowerCase()))
+        .persistent(true) // Saved to database
+        .build());
+}
+```
+
+---
+
+#### Part 9: Integration Checklist
+
+✅ **Configure defense derivation** in `mods/herocore/config.json`  
+✅ **Call `DefenseBridge.apply()`** on stat changes (level, gear, buffs)  
+✅ **Add level-based modifiers** for defense and damage  
+✅ **Display resistances** in Heroes UI via `UIDataProvider.getDefensePercent()`  
+✅ **Stack gear/buff modifiers** naturally via `stats.addModifier()`  
+✅ **Apply class-specific bonuses** as persistent modifiers  
+✅ **Test resistance caps** (default: 75% max) work correctly  
+✅ **Verify vanilla tab menu** shows Physical Defense only
+
+---
+
+#### Part 10: Complete Example
+
+```java
+public class HeroesIntegrationExample {
+    
+    public void setupPlayerDefense(UUID playerId, int level, HeroesClass heroClass) {
+        StatsComponent stats = getStatsComponent(playerId);
+        
+        // 1. Set base primaries from class + level
+        stats.setBase(RPGAttribute.VITALITY, 20 + (level * 2));
+        stats.setBase(RPGAttribute.DEXTERITY, 15 + (level * 1.5));
+        stats.setBase(RPGAttribute.RESOLVE, 10 + (level * 1));
+        stats.setBase(RPGAttribute.INTELLIGENCE, 12 + (level * 1.2));
+        
+        // 2. Apply class bonuses
+        applyClassBonuses(stats, heroClass);
+        
+        // 3. Apply level-based scaling
+        applyLevelDefenseModifiers(stats, level);
+        applyLevelDamageModifiers(stats, level);
+        
+        // 4. Sync Physical to Hytale native
+        new DefenseBridge(playerId).apply(stats);
+        
+        // 5. Display in UI
+        displayDefenseStats(playerId);
+    }
+    
+    private void displayDefenseStats(UUID playerId) {
+        UIDataProvider uiData = HeroCorePlugin.get().getUIDataProvider();
+        
+        double physDef = uiData.getDefensePercent(playerId, DefenseCategory.PHYSICAL_DEFENSE);
+        double fireDef = uiData.getDefensePercent(playerId, DefenseCategory.ELEMENTAL_FIRE);
+        
+        // Format: "Physical Defense: 45.2%"
+        sendMessage(playerId, String.format("§ePhysical Defense: §a%.1f%%", physDef * 100));
+        sendMessage(playerId, String.format("§eFire Resistance: §c%.1f%%", fireDef * 100));
+    }
+}
+```
 
 ---
 

@@ -107,26 +107,20 @@ class DamageSystemsTest {
     // ── ResistanceMitigationSystem ────────────────────────────────
 
     @Test
-    void armorReducesDamage() {
-        victimStats.setBase(RPGAttribute.ARMOR, 50.0);
+    void physicalDamage_skippedByMitigationSystem() {
+        // Physical is handled by Hytale native ArmorDamageReduction via DefenseBridge.
+        // ResistanceMitigationSystem must NOT touch it.
+        victimStats.setBase(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT, 0.5);
 
         DamageEvent e = event(100.0, DamageType.PHYSICAL);
         new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
-        assertEquals(50.0, e.getModifiedAmount(), 0.001);
-    }
-
-    @Test
-    void armorCapsAt90Percent() {
-        victimStats.setBase(RPGAttribute.ARMOR, 200.0);
-
-        DamageEvent e = event(100.0, DamageType.PHYSICAL);
-        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
-        assertEquals(10.0, e.getModifiedAmount(), 0.001);
+        assertEquals(100.0, e.getModifiedAmount(), 0.001,
+                "Physical damage must pass through unmodified — Hytale native handles it");
     }
 
     @Test
     void trueDamageSkipsResistance() {
-        victimStats.setBase(RPGAttribute.ARMOR, 200.0);
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 0.9);
 
         DamageEvent e = event(50.0, DamageType.TRUE);
         new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
@@ -134,24 +128,104 @@ class DamageSystemsTest {
     }
 
     @Test
-    void armorPenetrationReducesEffectiveArmor() {
-        victimStats.setBase(RPGAttribute.ARMOR, 80.0);
-        attackerStats.setBase(RPGAttribute.ARMOR_PENETRATION, 30.0);
+    void fireResistancePercent_appliesDirectly() {
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 0.4);
 
-        DamageEvent e = event(100.0, DamageType.PHYSICAL);
+        DamageEvent e = event(100.0, DamageType.FIRE);
         new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
-        // Effective armor = 80 - 30 = 50 → 50/100 = 0.5 → 50 damage
-        assertEquals(50.0, e.getModifiedAmount(), 0.001);
+        assertEquals(60.0, e.getModifiedAmount(), 0.001);
     }
 
     @Test
-    void elementalResistanceApplies() {
+    void fireResistance_fallsBackToLegacyAttribute() {
         victimStats.setBase(RPGAttribute.ELEMENTAL_RESIST_FIRE, 40.0);
 
         DamageEvent e = event(100.0, DamageType.FIRE);
         new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
-        // 40/100 = 0.4 reduction → 60 damage
         assertEquals(60.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void projectileResistance_reducesProjectileDamage() {
+        victimStats.setBase(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT, 0.25);
+
+        DamageEvent e = event(100.0, DamageType.PROJECTILE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(75.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void magicalResistance_reducesMagicalDamage() {
+        victimStats.setBase(RPGAttribute.MAGIC_RESIST, 0.35);
+
+        DamageEvent e = event(100.0, DamageType.MAGICAL);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(65.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void iceResistancePercent_appliesDirectly() {
+        victimStats.setBase(RPGAttribute.ICE_RESISTANCE_PERCENT, 0.3);
+
+        DamageEvent e = event(100.0, DamageType.ICE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(70.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void iceResistance_fallsBackToLegacy() {
+        victimStats.setBase(RPGAttribute.ELEMENTAL_RESIST_ICE, 50.0);
+
+        DamageEvent e = event(100.0, DamageType.ICE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(50.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void lightningResistancePercent_appliesDirectly() {
+        victimStats.setBase(RPGAttribute.LIGHTNING_RESISTANCE_PERCENT, 0.2);
+
+        DamageEvent e = event(100.0, DamageType.LIGHTNING);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(80.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void poisonResistancePercent_appliesDirectly() {
+        victimStats.setBase(RPGAttribute.POISON_RESISTANCE_PERCENT, 0.45);
+
+        DamageEvent e = event(100.0, DamageType.POISON);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(55.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void arcaneResistancePercent_appliesDirectly() {
+        victimStats.setBase(RPGAttribute.ARCANE_RESISTANCE_PERCENT, 0.6);
+
+        DamageEvent e = event(100.0, DamageType.ARCANE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(40.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void magicPenetration_reducesElementalResistance() {
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 0.5);
+        attackerStats.setBase(RPGAttribute.MAGIC_PENETRATION, 0.2);
+
+        DamageEvent e = event(100.0, DamageType.FIRE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        // Effective = 0.5 - 0.2 = 0.3 → 70 damage
+        assertEquals(70.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void resistanceCapsAt90PercentForElemental() {
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 2.0);
+
+        DamageEvent e = event(100.0, DamageType.FIRE);
+        new ResistanceMitigationSystem().onDamage(e, attackerStats, victimStats);
+        assertEquals(10.0, e.getModifiedAmount(), 0.001);
     }
 
     // ── CriticalHitSystem ─────────────────────────────────────────
@@ -221,10 +295,21 @@ class DamageSystemsTest {
     }
 
     @Test
-    void allSystems_armorReducesThenMinApplies() {
-        victimStats.setBase(RPGAttribute.ARMOR, 200.0);
+    void allSystems_physicalPassesThroughMitigation() {
+        // Physical is NOT mitigated by ResistanceMitigationSystem
+        // (Hytale native handles it) so damage flows through unchanged
+        victimStats.setBase(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT, 0.9);
 
-        DamageEvent e = event(0.5, DamageType.PHYSICAL);
+        DamageEvent e = event(100.0, DamageType.PHYSICAL);
+        runAllSystems(e, defaultSystems());
+        assertEquals(100.0, e.getModifiedAmount(), 0.001);
+    }
+
+    @Test
+    void allSystems_fireResistanceReducesThenMinApplies() {
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 2.0); // caps at 90%
+
+        DamageEvent e = event(0.5, DamageType.FIRE);
         runAllSystems(e, defaultSystems());
         // 0.5 * 0.1 = 0.05 → clamped to 1.0 minimum
         assertTrue(e.getModifiedAmount() >= 1.0);
@@ -241,15 +326,15 @@ class DamageSystemsTest {
 
     @Test
     void allSystems_disabledSystemIsSkipped() {
-        victimStats.setBase(RPGAttribute.ARMOR, 50.0);
+        victimStats.setBase(RPGAttribute.FIRE_RESISTANCE_PERCENT, 0.5);
 
         DamageSystem[] systems = defaultSystems();
         // Disable resistance mitigation (index 2)
         systems[2].setEnabled(false);
 
-        DamageEvent e = event(100.0, DamageType.PHYSICAL);
+        DamageEvent e = event(100.0, DamageType.FIRE);
         runAllSystems(e, systems);
-        // Armor system disabled → no reduction
+        // Resistance system disabled → no reduction
         assertEquals(100.0, e.getModifiedAmount(), 0.001);
     }
 

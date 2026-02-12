@@ -95,10 +95,14 @@ public class UIDataProviderImpl implements UIDataProvider {
             case PROJECTILE_RESISTANCE -> stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT);
             case ELEMENTAL_FIRE -> preferPercent(stats.getValue(RPGAttribute.FIRE_RESISTANCE_PERCENT),
                     stats.getValue(RPGAttribute.ELEMENTAL_RESIST_FIRE));
-            case ELEMENTAL_FROST -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ICE);
-            case ELEMENTAL_LIGHTNING -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_LIGHTNING);
-            case ELEMENTAL_POISON -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_POISON);
-            case ELEMENTAL_ARCANE -> stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ARCANE);
+            case ELEMENTAL_FROST -> preferPercent(stats.getValue(RPGAttribute.ICE_RESISTANCE_PERCENT),
+                    stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ICE));
+            case ELEMENTAL_LIGHTNING -> preferPercent(stats.getValue(RPGAttribute.LIGHTNING_RESISTANCE_PERCENT),
+                    stats.getValue(RPGAttribute.ELEMENTAL_RESIST_LIGHTNING));
+            case ELEMENTAL_POISON -> preferPercent(stats.getValue(RPGAttribute.POISON_RESISTANCE_PERCENT),
+                    stats.getValue(RPGAttribute.ELEMENTAL_RESIST_POISON));
+            case ELEMENTAL_ARCANE -> preferPercent(stats.getValue(RPGAttribute.ARCANE_RESISTANCE_PERCENT),
+                    stats.getValue(RPGAttribute.ELEMENTAL_RESIST_ARCANE));
         };
 
         return normalizePercent(value);

@@ -110,6 +110,10 @@
     "projectileResistancePercentPerDexterity": 0.001,
     "fireResistanceFlatPerResolve": 0.4,
     "fireResistancePercentPerResolve": 0.0015,
+    "iceResistancePercentPerIntelligence": 0.001,
+    "lightningResistancePercentPerIntelligence": 0.001,
+    "poisonResistancePercentPerResolve": 0.001,
+    "arcaneResistancePercentPerIntelligence": 0.001,
     "maxResistancePercent": 0.75
   },
   "attributes": {
@@ -150,7 +154,11 @@
       "PROJECTILE_RESISTANCE": 0.0,
       "PROJECTILE_RESISTANCE_PERCENT": 0.0,
       "FIRE_RESISTANCE": 0.0,
-      "FIRE_RESISTANCE_PERCENT": 0.0
+      "FIRE_RESISTANCE_PERCENT": 0.0,
+      "ICE_RESISTANCE_PERCENT": 0.0,
+      "LIGHTNING_RESISTANCE_PERCENT": 0.0,
+      "POISON_RESISTANCE_PERCENT": 0.0,
+      "ARCANE_RESISTANCE_PERCENT": 0.0
     }
   }
 }

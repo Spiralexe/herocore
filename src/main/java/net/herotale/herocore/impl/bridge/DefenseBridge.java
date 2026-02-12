@@ -14,12 +14,18 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Bridge that reads HeroCore resistance attributes and syncs them into
- * Hytale's native damage resistance system.
+ * Bridge that syncs HeroCore's <b>Physical</b> resistance attributes into
+ * Hytale's native damage resistance system for <b>vanilla UI display only</b>.
  * <p>
- * <b>Strategy:</b> HeroCore computes resistance values from its own attribute
- * system (primaries, modifiers, gear, buffs, level-based bonuses). This bridge
- * dynamically creates/updates {@link StaticModifier} entries on the player's
+ * <b>Design rule:</b> Only Physical Defense is mapped to Hytale's native stat system.
+ * The vanilla tab menu shows {@code Defense = Physical Defense only}. Elemental,
+ * projectile, magical, and all other resistance types are <b>never</b> pushed to
+ * the native stat map. They exist exclusively within HeroCore's own
+ * {@code ResistanceMitigationSystem} and the Hero Attributes UI layer.
+ * <p>
+ * <b>Strategy:</b> HeroCore computes physical resistance values from its own
+ * attribute system (primaries, modifiers, gear, buffs, level-based bonuses). This
+ * bridge dynamically creates/updates {@link StaticModifier} entries on the player's
  * {@link EntityStatMap}, which Hytale's built-in {@code ArmorDamageReduction}
  * system reads during its damage calculation pipeline.
  * <p>
@@ -44,20 +50,18 @@ import java.util.logging.Logger;
  * │     StatsComponent       │
  * │  PHYSICAL_RESISTANCE     │─ computed from VIT + gear + buffs + level
  * │  PHYSICAL_RESISTANCE_PCT │
- * │  PROJECTILE_RESISTANCE   │─ computed from DEX + gear + buffs
- * │  PROJECTILE_RESISTANCE_PCT│
- * │  FIRE_RESISTANCE         │─ computed from RESOLVE + gear + buffs
- * │  FIRE_RESISTANCE_PERCENT │
+ * │                          │  (Projectile, Fire, Elemental, Magical
+ * │                          │   stay in HeroCore — NOT bridged)
  * │  ARMOR (dormant)         │─ stored, not yet wired to gameplay
  * └───────────┬──────────────┘
- *             │ DefenseBridge.apply()
+ *             │ DefenseBridge.apply()  [Physical only]
  *             ▼
  * ┌──────────────────────────┐
  * │  Hytale EntityStatMap    │
  * │  putModifier("herocore:  │─ StaticModifier(ADDITIVE/MULTIPLICATIVE)
  * │    physical_resist_flat") │
  * └───────────┬──────────────┘
- *             │ (native pipeline)
+ *             │ (native pipeline — vanilla tab menu reads this as "Defense")
  *             ▼
  * ┌──────────────────────────┐
  * │  ArmorDamageReduction    │─ Reads ItemArmor + EntityEffect + stat modifiers
@@ -72,13 +76,13 @@ public class DefenseBridge {
 
     private static final Logger LOG = Logger.getLogger(DefenseBridge.class.getName());
 
-    // Modifier keys — unique per HeroCore, won't collide with other plugins
+    // Modifier keys — unique per HeroCore, won't collide with other plugins.
+    // ONLY Physical is bridged to Hytale native. Projectile, elemental, and magical
+    // resistances live entirely within HeroCore's own mitigation system and are never
+    // pushed to the vanilla stat map. This ensures the tab-menu "Defense" value
+    // reflects Physical Defense only, matching Hytale's vanilla behavior.
     private static final String PHYS_FLAT_KEY  = "herocore:physical_resistance_flat";
     private static final String PHYS_PCT_KEY   = "herocore:physical_resistance_pct";
-    private static final String PROJ_FLAT_KEY  = "herocore:projectile_resistance_flat";
-    private static final String PROJ_PCT_KEY   = "herocore:projectile_resistance_pct";
-    private static final String FIRE_FLAT_KEY  = "herocore:fire_resistance_flat";
-    private static final String FIRE_PCT_KEY   = "herocore:fire_resistance_pct";
 
     private final UUID entityUuid;
 
@@ -109,7 +113,8 @@ public class DefenseBridge {
             return;
         }
 
-        // Physical resistance
+        // Physical resistance — the ONLY type synced to vanilla.
+        // Hytale's tab menu reads this as "Defense".
         applyResistanceModifiers(statMap,
                 stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE),
                 stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT),
@@ -117,31 +122,14 @@ public class DefenseBridge {
                 PHYS_FLAT_KEY,
                 PHYS_PCT_KEY);
 
-        // Projectile resistance
-        applyResistanceModifiers(statMap,
-                stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE),
-                stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT),
-                "Projectile",
-                PROJ_FLAT_KEY,
-                PROJ_PCT_KEY);
-
-        // Fire resistance
-        applyResistanceModifiers(statMap,
-                stats.getValue(RPGAttribute.FIRE_RESISTANCE),
-                stats.getValue(RPGAttribute.FIRE_RESISTANCE_PERCENT),
-                "Fire",
-                FIRE_FLAT_KEY,
-                FIRE_PCT_KEY);
+        // Projectile, fire, and all other resistances are NOT synced here.
+        // They are evaluated by HeroCore's ResistanceMitigationSystem only.
 
         LOG.fine(() -> String.format(
-                "DefenseBridge[%s]: synced resistances — phys=%.2f/%.1f%%, proj=%.2f/%.1f%%, fire=%.2f/%.1f%%",
+                "DefenseBridge[%s]: synced Physical resistance — flat=%.2f, pct=%.1f%%",
                 entityUuid,
                 stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE),
-                stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT) * 100,
-                stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE),
-                stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE_PERCENT) * 100,
-                stats.getValue(RPGAttribute.FIRE_RESISTANCE),
-                stats.getValue(RPGAttribute.FIRE_RESISTANCE_PERCENT) * 100));
+                stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE_PERCENT) * 100));
     }
 
     /**
@@ -159,12 +147,8 @@ public class DefenseBridge {
 
         removeModifierSafe(statMap, "Health", PHYS_FLAT_KEY);
         removeModifierSafe(statMap, "Health", PHYS_PCT_KEY);
-        removeModifierSafe(statMap, "Health", PROJ_FLAT_KEY);
-        removeModifierSafe(statMap, "Health", PROJ_PCT_KEY);
-        removeModifierSafe(statMap, "Health", FIRE_FLAT_KEY);
-        removeModifierSafe(statMap, "Health", FIRE_PCT_KEY);
 
-        LOG.fine(() -> String.format("DefenseBridge[%s]: removed all defense modifiers", entityUuid));
+        LOG.fine(() -> String.format("DefenseBridge[%s]: removed Physical defense modifiers", entityUuid));
     }
 
     // ── Internal ─────────────────────────────────────────────────────

@@ -249,5 +249,26 @@ public final class AttributeCalculator {
         double firePercent = resolve * defenseDerivation.fireResistancePercentPerResolve();
         firePercent = Math.min(firePercent, cap);
         stats.addDerivedModifier(RPGAttribute.FIRE_RESISTANCE_PERCENT, firePercent, ModifierType.FLAT);
+
+        // Ice resistance from INTELLIGENCE
+        double intelligence = stats.getValue(RPGAttribute.INTELLIGENCE);
+        double icePercent = intelligence * defenseDerivation.iceResistancePercentPerIntelligence();
+        icePercent = Math.min(icePercent, cap);
+        stats.addDerivedModifier(RPGAttribute.ICE_RESISTANCE_PERCENT, icePercent, ModifierType.FLAT);
+
+        // Lightning resistance from INTELLIGENCE
+        double lightningPercent = intelligence * defenseDerivation.lightningResistancePercentPerIntelligence();
+        lightningPercent = Math.min(lightningPercent, cap);
+        stats.addDerivedModifier(RPGAttribute.LIGHTNING_RESISTANCE_PERCENT, lightningPercent, ModifierType.FLAT);
+
+        // Poison resistance from RESOLVE
+        double poisonPercent = resolve * defenseDerivation.poisonResistancePercentPerResolve();
+        poisonPercent = Math.min(poisonPercent, cap);
+        stats.addDerivedModifier(RPGAttribute.POISON_RESISTANCE_PERCENT, poisonPercent, ModifierType.FLAT);
+
+        // Arcane resistance from INTELLIGENCE
+        double arcanePercent = intelligence * defenseDerivation.arcaneResistancePercentPerIntelligence();
+        arcanePercent = Math.min(arcanePercent, cap);
+        stats.addDerivedModifier(RPGAttribute.ARCANE_RESISTANCE_PERCENT, arcanePercent, ModifierType.FLAT);
     }
 }

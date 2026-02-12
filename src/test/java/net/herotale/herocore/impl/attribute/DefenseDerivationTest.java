@@ -38,6 +38,10 @@ class DefenseDerivationTest {
                     0.001,   // projectileResistancePercentPerDexterity
                     0.4,     // fireResistanceFlatPerResolve
                     0.0015,  // fireResistancePercentPerResolve
+                    0.001,   // iceResistancePercentPerIntelligence
+                    0.001,   // lightningResistancePercentPerIntelligence
+                    0.001,   // poisonResistancePercentPerResolve
+                    0.001,   // arcaneResistancePercentPerIntelligence
                     0.75     // maxResistancePercent
             );
 
@@ -241,5 +245,58 @@ class DefenseDerivationTest {
         assertEquals(10.0, stats.getValue(RPGAttribute.PHYSICAL_RESISTANCE), 0.001);
         assertEquals(4.5, stats.getValue(RPGAttribute.PROJECTILE_RESISTANCE), 0.001);
         assertEquals(4.0, stats.getValue(RPGAttribute.FIRE_RESISTANCE), 0.001);
+    }
+
+    // ── Elemental Percent Derivation ───────────────────────────────
+
+    @Test
+    void iceResistance_derivesFromIntelligence() {
+        StatsComponent stats = createStatsWithDerivations();
+        stats.setBase(RPGAttribute.INTELLIGENCE, 40.0);
+
+        // 40 * 0.001 = 0.04
+        double icePercent = stats.getValue(RPGAttribute.ICE_RESISTANCE_PERCENT);
+        assertEquals(0.04, icePercent, 0.001, "Ice resistance percent should be INT * 0.001");
+    }
+
+    @Test
+    void lightningResistance_derivesFromIntelligence() {
+        StatsComponent stats = createStatsWithDerivations();
+        stats.setBase(RPGAttribute.INTELLIGENCE, 50.0);
+
+        // 50 * 0.001 = 0.05
+        double ltnPercent = stats.getValue(RPGAttribute.LIGHTNING_RESISTANCE_PERCENT);
+        assertEquals(0.05, ltnPercent, 0.001, "Lightning resistance percent should be INT * 0.001");
+    }
+
+    @Test
+    void poisonResistance_derivesFromResolve() {
+        StatsComponent stats = createStatsWithDerivations();
+        stats.setBase(RPGAttribute.RESOLVE, 30.0);
+
+        // 30 * 0.001 = 0.03
+        double poisonPercent = stats.getValue(RPGAttribute.POISON_RESISTANCE_PERCENT);
+        assertEquals(0.03, poisonPercent, 0.001, "Poison resistance percent should be RESOLVE * 0.001");
+    }
+
+    @Test
+    void arcaneResistance_derivesFromIntelligence() {
+        StatsComponent stats = createStatsWithDerivations();
+        stats.setBase(RPGAttribute.INTELLIGENCE, 60.0);
+
+        // 60 * 0.001 = 0.06
+        double arcPercent = stats.getValue(RPGAttribute.ARCANE_RESISTANCE_PERCENT);
+        assertEquals(0.06, arcPercent, 0.001, "Arcane resistance percent should be INT * 0.001");
+    }
+
+    @Test
+    void elementalResistancePercent_cappedByMaxResistance() {
+        StatsComponent stats = createStatsWithDerivations();
+        // 1000 INT * 0.001 = 1.0, capped at 0.75
+        stats.setBase(RPGAttribute.INTELLIGENCE, 1000.0);
+
+        assertEquals(0.75, stats.getValue(RPGAttribute.ICE_RESISTANCE_PERCENT), 0.001);
+        assertEquals(0.75, stats.getValue(RPGAttribute.LIGHTNING_RESISTANCE_PERCENT), 0.001);
+        assertEquals(0.75, stats.getValue(RPGAttribute.ARCANE_RESISTANCE_PERCENT), 0.001);
     }
 }

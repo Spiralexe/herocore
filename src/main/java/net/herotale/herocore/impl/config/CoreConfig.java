@@ -132,6 +132,14 @@ public record CoreConfig(
             double fireResistanceFlatPerResolve,
             /** Percent fire resistance per point of RESOLVE. */
             double fireResistancePercentPerResolve,
+            /** Percent ice resistance per point of INTELLIGENCE. */
+            double iceResistancePercentPerIntelligence,
+            /** Percent lightning resistance per point of INTELLIGENCE. */
+            double lightningResistancePercentPerIntelligence,
+            /** Percent poison resistance per point of RESOLVE. */
+            double poisonResistancePercentPerResolve,
+            /** Percent arcane resistance per point of INTELLIGENCE. */
+            double arcaneResistancePercentPerIntelligence,
             /** Maximum percent resistance cap (prevents 100% damage immunity). */
             double maxResistancePercent
     ) {}

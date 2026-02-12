@@ -5,6 +5,8 @@ package net.herotale.herocore.api.damage;
  */
 public enum DamageType {
     PHYSICAL,
+    PROJECTILE,
+    MAGICAL,
     FIRE,
     ICE,
     LIGHTNING,

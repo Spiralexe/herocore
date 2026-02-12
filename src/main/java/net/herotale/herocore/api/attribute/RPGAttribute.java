@@ -77,6 +77,28 @@ public enum RPGAttribute {
     ELEMENTAL_RESIST_POISON,
     ELEMENTAL_RESIST_ARCANE,
 
+    // ── Defense — Elemental Resistance Percent (0.0–1.0) ────────────
+    /**
+     * Percent resistance to ICE damage (0.0–1.0). Derived from Intelligence.
+     * Takes priority over the legacy {@code ELEMENTAL_RESIST_ICE} (0–100 scale).
+     */
+    ICE_RESISTANCE_PERCENT,
+
+    /**
+     * Percent resistance to LIGHTNING damage (0.0–1.0). Derived from Intelligence.
+     */
+    LIGHTNING_RESISTANCE_PERCENT,
+
+    /**
+     * Percent resistance to POISON damage (0.0–1.0). Derived from Resolve.
+     */
+    POISON_RESISTANCE_PERCENT,
+
+    /**
+     * Percent resistance to ARCANE damage (0.0–1.0). Derived from Intelligence.
+     */
+    ARCANE_RESISTANCE_PERCENT,
+
     // ── Combat — Healing ────────────────────────────────────────────────
     HEALING_POWER,
     HEALING_RECEIVED_BONUS,
