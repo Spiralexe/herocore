@@ -2,7 +2,7 @@
 
 > **An ECS-native RPG attribute and combat system for Hytale servers**
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](manifest.json)
+[![Version](https://img.shields.io/badge/version-*-blue.svg)](manifest.json)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net/)
 [![Hytale](https://img.shields.io/badge/Hytale-2026.02.06+-purple.svg)](https://hytale.com)
 
@@ -78,7 +78,7 @@ Systems never call each other directly — they react to events in the order def
 ### As a Server Plugin
 
 1. Download the latest release JAR from the releases page
-2. Place `herocore-0.0.1.jar` in your server's `mods/` directory
+2. Place `herocore*.jar` in your server's `mods/` directory
 3. Start the server — HeroCore will generate `mods/herocore/config.json`
 4. Configure attribute derivations, damage formulas, and system behavior in the config
 
@@ -94,9 +94,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly(files("../herocore/build/libs/herocore-0.0.1.jar"))
+    compileOnly(files("../herocore/build/libs/herocore-*.jar"))
     // Or use a Maven coordinate once published
-    // compileOnly("net.herotale:herocore:0.0.1")
+    // compileOnly("net.herotale:herocore:*")
 }
 ```
 
@@ -105,7 +105,7 @@ Declare the dependency in your `manifest.json`:
 ```json
 {
   "Dependencies": {
-    "net.herotale:herocore": "0.0.1"
+    "net.herotale:herocore": "*"
   }
 }
 ```
@@ -694,7 +694,7 @@ cd herocore
 ./gradlew build
 ```
 
-The output JAR will be in `build/libs/herocore-0.0.1.jar`.
+The output JAR will be in `build/libs/herocore-*.jar`.
 
 ### Run Tests
 
