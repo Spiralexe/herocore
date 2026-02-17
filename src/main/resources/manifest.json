@@ -2,14 +2,14 @@
     "Group": "Herotale",
     "Name": "Herocore",
     "Version": "0.1.0",
-    "Description": " Attributes, Modifier, Damage, Leveling registry, Status effect registry, Zone modifier registry, CraftingEvent, ProgressionEvent bus, Entity attribute maps (player and non-player), HarvestTier registry ",
+    "Description": " Attributes, Modifier, Damage, Leveling registr, Status effect registry, Zone modifier registry, CraftingEvent, ProgressionEvent bus, Entity attribute maps (player and non-player), HarvestTier registry ",
     "Authors": [
         {
             "Name": "Kainzo"
         }
     ],
     "Website": "https://herotale.net/",
-    "ServerVersion": "*",
+    "ServerVersion": "2026.02.17-255364b8e",
     "Dependencies": {
     },
     "OptionalDependencies": {
