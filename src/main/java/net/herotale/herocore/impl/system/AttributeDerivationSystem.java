@@ -19,6 +19,7 @@ import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import net.herotale.herocore.api.attribute.RPGAttribute;
 import net.herotale.herocore.api.component.HeroCoreStatsComponent;
 import net.herotale.herocore.impl.HeroCoreComponentRegistry;
+import net.herotale.herocore.impl.HeroCoreModifiers;
 import net.herotale.herocore.impl.HeroCoreStatTypes;
 import net.herotale.herocore.impl.attribute.AttributeDerivationFormulas;
 
@@ -75,7 +76,7 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore> 
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
-    private static final String DERIVED_MODIFIER_PREFIX = "herocore:derived:";
+    // Modifier keys from HeroCoreModifiers — HC_ prefix for global uniqueness
 
     public AttributeDerivationSystem() {
         // No fields needed — derivation is pure math in AttributeDerivationFormulas
@@ -142,63 +143,63 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore> 
         // The modifier key ensures we can update/remove each one independently
         
         if (derived.containsKey(RPGAttribute.PHYSICAL_RESISTANCE)) {
-            addModifier(entityStatMap, "physical_resistance",
-                    HeroCoreStatTypes.getPhysicalResistance(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_PHYSICAL_RESISTANCE,
+                    HeroCoreStatTypes.getPhysicalResistance(),
                     derived.get(RPGAttribute.PHYSICAL_RESISTANCE), false);
         }
 
         if (derived.containsKey(RPGAttribute.SPELL_POWER)) {
-            addModifier(entityStatMap, "spell_power",
-                    HeroCoreStatTypes.getSpellPower(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_SPELL_POWER,
+                    HeroCoreStatTypes.getSpellPower(),
                     derived.get(RPGAttribute.SPELL_POWER), false);
         }
 
         if (derived.containsKey(RPGAttribute.CRIT_CHANCE)) {
-            addModifier(entityStatMap, "crit_chance",
-                    HeroCoreStatTypes.getCritChance(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_CRIT_CHANCE,
+                    HeroCoreStatTypes.getCritChance(),
                     derived.get(RPGAttribute.CRIT_CHANCE), false);
         }
 
         if (derived.containsKey(RPGAttribute.CRIT_DAMAGE_MULTIPLIER)) {
-            addModifier(entityStatMap, "crit_damage_multiplier",
-                    HeroCoreStatTypes.getCritDamageMultiplier(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_CRIT_DAMAGE_MULTIPLIER,
+                    HeroCoreStatTypes.getCritDamageMultiplier(),
                     derived.get(RPGAttribute.CRIT_DAMAGE_MULTIPLIER), false);
         }
 
         if (derived.containsKey(RPGAttribute.ATTACK_DAMAGE)) {
-            addModifier(entityStatMap, "attack_damage",
-                    HeroCoreStatTypes.getAttackDamage(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_ATTACK_DAMAGE,
+                    HeroCoreStatTypes.getAttackDamage(),
                     derived.get(RPGAttribute.ATTACK_DAMAGE), false);
         }
 
         if (derived.containsKey(RPGAttribute.MOVE_SPEED)) {
-            addModifier(entityStatMap, "move_speed",
-                    HeroCoreStatTypes.getMoveSpeed(), 
-                    derived.get(RPGAttribute.MOVE_SPEED), true); // percent modifier
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_MOVE_SPEED,
+                    HeroCoreStatTypes.getMoveSpeed(),
+                    derived.get(RPGAttribute.MOVE_SPEED), false);
         }
 
         if (derived.containsKey(RPGAttribute.ATTACK_SPEED)) {
-            addModifier(entityStatMap, "attack_speed",
-                    HeroCoreStatTypes.getAttackSpeed(), 
-                    derived.get(RPGAttribute.ATTACK_SPEED), true); // percent modifier
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_ATTACK_SPEED,
+                    HeroCoreStatTypes.getAttackSpeed(),
+                    derived.get(RPGAttribute.ATTACK_SPEED), false);
         }
 
         if (derived.containsKey(RPGAttribute.MAGIC_RESIST)) {
-            addModifier(entityStatMap, "magic_resist",
-                    HeroCoreStatTypes.getMagicResist(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_MAGIC_RESIST,
+                    HeroCoreStatTypes.getMagicResist(),
                     derived.get(RPGAttribute.MAGIC_RESIST), false);
         }
 
         if (derived.containsKey(RPGAttribute.HEALING_POWER)) {
-            addModifier(entityStatMap, "healing_power",
-                    HeroCoreStatTypes.getHealingPower(), 
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_HEALING_POWER,
+                    HeroCoreStatTypes.getHealingPower(),
                     derived.get(RPGAttribute.HEALING_POWER), false);
         }
 
         if (derived.containsKey(RPGAttribute.MINING_SPEED)) {
-            addModifier(entityStatMap, "mining_speed",
-                    HeroCoreStatTypes.getMiningSpeed(), 
-                    derived.get(RPGAttribute.MINING_SPEED), true); // percent modifier
+            addModifier(entityStatMap, HeroCoreModifiers.DERIVED_MINING_SPEED,
+                    HeroCoreStatTypes.getMiningSpeed(),
+                    derived.get(RPGAttribute.MINING_SPEED), false);
         }
     }
 
@@ -211,25 +212,20 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore> 
      * @param value         the value to add/modify
      * @param isPercent     true if this is a percentage modifier (multiplicative stacking)
      */
-    private void addModifier(EntityStatMap entityStatMap, String modifierName,
+    private void addModifier(EntityStatMap entityStatMap, String modifierKey,
                              int statTypeIndex, double value, boolean isPercent) {
         if (statTypeIndex == Integer.MIN_VALUE) {
-            // Stat type index not resolved (asset not found)
-            LOGGER.at(Level.WARNING).log("Stat type index not resolved for %s", modifierName);
+            LOGGER.at(Level.WARNING).log("Stat type index not resolved for %s", modifierKey);
             return;
         }
 
         if (Math.abs(value) < 1e-10) {
-            // Value is essentially zero, remove modifier if it exists
-            String modifierId = DERIVED_MODIFIER_PREFIX + modifierName;
-            entityStatMap.removeModifier(statTypeIndex, modifierId);
+            entityStatMap.removeModifier(statTypeIndex, modifierKey);
             return;
         }
 
-        // Create and add static modifier
-        String modifierId = DERIVED_MODIFIER_PREFIX + modifierName;
         StaticModifier modifier = createStaticModifier((float) value, isPercent);
-        entityStatMap.putModifier(statTypeIndex, modifierId, modifier);
+        entityStatMap.putModifier(statTypeIndex, modifierKey, modifier);
     }
 
     /**
@@ -240,12 +236,11 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore> 
      * @return a new StaticModifier configured for EntityStatMap
      */
     private StaticModifier createStaticModifier(float value, boolean isPercent) {
-        // StaticModifier uses Modifier.ModifierTarget.MAX (default for applying bonuses)
-        // and CalculationType (ADDITIVE for flat bonuses, MULTIPLICATIVE for percent)
-        StaticModifier.CalculationType type = isPercent 
-            ? StaticModifier.CalculationType.MULTIPLICATIVE 
-            : StaticModifier.CalculationType.ADDITIVE;
-        
-        return new StaticModifier(Modifier.ModifierTarget.MAX, type, value);
+        // All derived modifiers use ADDITIVE stacking — even speed modifiers.
+        // Speed stats have a base of 1.0; the derived formula outputs the bonus
+        // (e.g. 0.2 for +20% speed). ADDITIVE adds to the base directly.
+        // MULTIPLICATIVE would compound with other modifiers incorrectly.
+        return new StaticModifier(Modifier.ModifierTarget.MAX,
+                StaticModifier.CalculationType.ADDITIVE, value);
     }
 }

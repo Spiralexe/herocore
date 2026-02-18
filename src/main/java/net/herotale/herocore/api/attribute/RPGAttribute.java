@@ -29,8 +29,8 @@ public enum RPGAttribute {
     // ── Defense — Hytale-Native Resistance (per DamageCause) ─────────
     /**
      * Additive flat resistance to PHYSICAL damage cause.
-     * Synced to Hytale's native {@code ArmorDamageReduction} system via
-     * {@code DefenseBridge}. Formula: {@code damage = max(0, raw - flat) * max(0, 1 - percent)}.
+     * Written directly to {@code EntityStatMap} by {@code AttributeDerivationSystem}.
+     * Formula: {@code damage = max(0, raw - flat) * max(0, 1 - percent)}.
      */
     PHYSICAL_RESISTANCE,
 
@@ -139,8 +139,6 @@ public enum RPGAttribute {
 
     // ── Progression ─────────────────────────────────────────────────────
     XP_GAIN_MULTIPLIER,
-    REP_GAIN_MULTIPLIER,
-    REP_LOSS_REDUCTION,
 
     // ── Economy ─────────────────────────────────────────────────────────
     VENDOR_PRICE_MULTIPLIER,

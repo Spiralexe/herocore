@@ -84,9 +84,9 @@ public class LevelingRegistryImpl implements LevelingRegistry {
 
         // Fire level change events
         if (newLevel > oldLevel) {
-            levelUpSink.accept(new LevelUpEvent(playerUuid, profileId, oldLevel, newLevel));
+            levelUpSink.accept(new LevelUpEvent(oldLevel, newLevel));
         } else if (newLevel < oldLevel) {
-            levelDownSink.accept(new LevelDownEvent(playerUuid, profileId, oldLevel, newLevel));
+            levelDownSink.accept(new LevelDownEvent(oldLevel, newLevel));
         }
     }
 

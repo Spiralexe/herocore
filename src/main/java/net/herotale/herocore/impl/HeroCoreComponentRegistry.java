@@ -1,60 +1,80 @@
 package net.herotale.herocore.impl;
 
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.ComponentRegistryProxy;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import net.herotale.herocore.api.component.CombatStateComponent;
+import net.herotale.herocore.api.component.HeroCoreProgressionComponent;
 import net.herotale.herocore.api.component.HeroCoreStatsComponent;
+import net.herotale.herocore.api.component.StatusEffectIndexComponent;
 
 /**
- * Central registry for HeroCore ECS components and their serialization codecs.
- *
+ * Central registry for HeroCore ECS components.
+ * <p>
  * Follows the pattern from EntityStatsModule and other core modules:
- * - Register components and codecs once during plugin setup()
- * - ComponentType is returned by registerComponent() — not created via static factory
- * - Uses BuilderCodec builder pattern with KeyedCodec for each field
+ * - Register components once during plugin setup()
+ * - ComponentType is returned by registerComponent()
+ * - Uses BuilderCodec for persistent components; Supplier for non-persistent
  */
 public class HeroCoreComponentRegistry {
 
     /**
-     * ComponentType handle for HeroCoreStatsComponent.
-     * Set during {@link #registerComponents} — null before plugin setup().
+     * ComponentType handle for HeroCoreStatsComponent (persistent).
+     * Set during {@link #registerComponents}.
      */
     public static ComponentType<EntityStore, HeroCoreStatsComponent> HERO_CORE_STATS;
 
     /**
-     * BuilderCodec for HeroCoreStatsComponent persistence.
-     * KeyedCodec keys must start with uppercase (Hytale convention).
+     * ComponentType handle for HeroCoreProgressionComponent (persistent).
+     * Set during {@link #registerComponents}.
      */
-    public static final BuilderCodec<HeroCoreStatsComponent> CODEC =
-            BuilderCodec.builder(HeroCoreStatsComponent.class, HeroCoreStatsComponent::new)
-                    .append(new KeyedCodec<>("Strength", Codec.DOUBLE),
-                            (c, v) -> c.setStrength(v), HeroCoreStatsComponent::getStrength).add()
-                    .append(new KeyedCodec<>("Dexterity", Codec.DOUBLE),
-                            (c, v) -> c.setDexterity(v), HeroCoreStatsComponent::getDexterity).add()
-                    .append(new KeyedCodec<>("Intelligence", Codec.DOUBLE),
-                            (c, v) -> c.setIntelligence(v), HeroCoreStatsComponent::getIntelligence).add()
-                    .append(new KeyedCodec<>("Faith", Codec.DOUBLE),
-                            (c, v) -> c.setFaith(v), HeroCoreStatsComponent::getFaith).add()
-                    .append(new KeyedCodec<>("Vitality", Codec.DOUBLE),
-                            (c, v) -> c.setVitality(v), HeroCoreStatsComponent::getVitality).add()
-                    .append(new KeyedCodec<>("Resolve", Codec.DOUBLE),
-                            (c, v) -> c.setResolve(v), HeroCoreStatsComponent::getResolve).add()
-                    .build();
+    public static ComponentType<EntityStore, HeroCoreProgressionComponent> HERO_CORE_PROGRESSION;
+
+    /**
+     * ComponentType handle for CombatStateComponent (non-persistent).
+     * Set during {@link #registerComponents}.
+     */
+    public static ComponentType<EntityStore, CombatStateComponent> COMBAT_STATE;
+
+    /**
+     * ComponentType handle for StatusEffectIndexComponent (non-persistent).
+     * Set during {@link #registerComponents}.
+     */
+    public static ComponentType<EntityStore, StatusEffectIndexComponent> STATUS_EFFECT_INDEX;
 
     /**
      * Register all HeroCore components with the entity store.
      * Called during plugin setup(). The returned ComponentType is stored for later use.
      */
     public static void registerComponents(ComponentRegistryProxy<EntityStore> registry) {
+        // Persistent components (with BuilderCodec)
         HERO_CORE_STATS = registry.registerComponent(
                 HeroCoreStatsComponent.class,
                 "herocore:stats",
-                CODEC
+                HeroCoreStatsComponent.CODEC
         );
+        HeroCoreStatsComponent.setComponentType(HERO_CORE_STATS);
+
+        HERO_CORE_PROGRESSION = registry.registerComponent(
+                HeroCoreProgressionComponent.class,
+                "herocore:progression",
+                HeroCoreProgressionComponent.CODEC
+        );
+        HeroCoreProgressionComponent.setComponentType(HERO_CORE_PROGRESSION);
+
+        // Non-persistent components (with Supplier, no codec)
+        COMBAT_STATE = registry.registerComponent(
+                CombatStateComponent.class,
+                CombatStateComponent::new
+        );
+        CombatStateComponent.setComponentType(COMBAT_STATE);
+
+        STATUS_EFFECT_INDEX = registry.registerComponent(
+                StatusEffectIndexComponent.class,
+                StatusEffectIndexComponent::new
+        );
+        StatusEffectIndexComponent.setComponentType(STATUS_EFFECT_INDEX);
     }
 
     private HeroCoreComponentRegistry() {}

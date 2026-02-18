@@ -1,6 +1,10 @@
 package net.herotale.herocore.api.component;
 
+import com.hypixel.hytale.codec.Codec;
+import com.hypixel.hytale.codec.KeyedCodec;
+import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Component;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
@@ -30,18 +34,29 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
  */
 public class HeroCoreStatsComponent implements Component<EntityStore> {
 
-    private double strength = 0.0;
-    private double dexterity = 0.0;
-    private double intelligence = 0.0;
-    private double faith = 0.0;
-    private double vitality = 0.0;
-    private double resolve = 0.0;
+    private float strength;
+    private float dexterity;
+    private float intelligence;
+    private float faith;
+    private float vitality;
+    private float resolve;
 
-    public HeroCoreStatsComponent() {
+    /** Default constructor required by registration factory. */
+    public HeroCoreStatsComponent() {}
+
+    /** Copy constructor required by {@link #clone()}. */
+    public HeroCoreStatsComponent(HeroCoreStatsComponent other) {
+        this.strength     = other.strength;
+        this.dexterity    = other.dexterity;
+        this.intelligence = other.intelligence;
+        this.faith        = other.faith;
+        this.vitality     = other.vitality;
+        this.resolve      = other.resolve;
     }
 
-    public HeroCoreStatsComponent(double strength, double dexterity, double intelligence,
-                                  double faith, double vitality, double resolve) {
+    /** Convenience constructor for tests and direct initialization. */
+    public HeroCoreStatsComponent(float strength, float dexterity, float intelligence,
+                                  float faith, float vitality, float resolve) {
         this.strength = strength;
         this.dexterity = dexterity;
         this.intelligence = intelligence;
@@ -50,32 +65,53 @@ public class HeroCoreStatsComponent implements Component<EntityStore> {
         this.resolve = resolve;
     }
 
+    @Override
+    public Component<EntityStore> clone() {
+        return new HeroCoreStatsComponent(this);
+    }
+
+    // ── Static ComponentType handle ──────────────────────────────────
+    private static ComponentType<EntityStore, HeroCoreStatsComponent> type;
+
+    public static ComponentType<EntityStore, HeroCoreStatsComponent> getComponentType() {
+        return type;
+    }
+
+    public static void setComponentType(ComponentType<EntityStore, HeroCoreStatsComponent> t) {
+        type = t;
+    }
+
+    // ── BuilderCodec ─────────────────────────────────────────────────
+    // HC_ prefix for global uniqueness across all KeyedCodec identifiers
+    public static final BuilderCodec<HeroCoreStatsComponent> CODEC = BuilderCodec
+            .builder(HeroCoreStatsComponent.class, HeroCoreStatsComponent::new)
+            .append(new KeyedCodec<>("HC_Strength",     Codec.FLOAT), HeroCoreStatsComponent::setStrength,     HeroCoreStatsComponent::getStrength).add()
+            .append(new KeyedCodec<>("HC_Dexterity",    Codec.FLOAT), HeroCoreStatsComponent::setDexterity,    HeroCoreStatsComponent::getDexterity).add()
+            .append(new KeyedCodec<>("HC_Intelligence", Codec.FLOAT), HeroCoreStatsComponent::setIntelligence, HeroCoreStatsComponent::getIntelligence).add()
+            .append(new KeyedCodec<>("HC_Faith",        Codec.FLOAT), HeroCoreStatsComponent::setFaith,        HeroCoreStatsComponent::getFaith).add()
+            .append(new KeyedCodec<>("HC_Vitality",     Codec.FLOAT), HeroCoreStatsComponent::setVitality,     HeroCoreStatsComponent::getVitality).add()
+            .append(new KeyedCodec<>("HC_Resolve",      Codec.FLOAT), HeroCoreStatsComponent::setResolve,      HeroCoreStatsComponent::getResolve).add()
+            .build();
+
     // ── Primary Attributes ────────────────────────────────────────────
 
-    public double getStrength() { return strength; }
-    public void setStrength(double value) { this.strength = value; }
+    public float getStrength() { return strength; }
+    public void setStrength(float value) { this.strength = value; }
 
-    public double getDexterity() { return dexterity; }
-    public void setDexterity(double value) { this.dexterity = value; }
+    public float getDexterity() { return dexterity; }
+    public void setDexterity(float value) { this.dexterity = value; }
 
-    public double getIntelligence() { return intelligence; }
-    public void setIntelligence(double value) { this.intelligence = value; }
+    public float getIntelligence() { return intelligence; }
+    public void setIntelligence(float value) { this.intelligence = value; }
 
-    public double getFaith() { return faith; }
-    public void setFaith(double value) { this.faith = value; }
+    public float getFaith() { return faith; }
+    public void setFaith(float value) { this.faith = value; }
 
-    public double getVitality() { return vitality; }
-    public void setVitality(double value) { this.vitality = value; }
+    public float getVitality() { return vitality; }
+    public void setVitality(float value) { this.vitality = value; }
 
-    public double getResolve() { return resolve; }
-    public void setResolve(double value) { this.resolve = value; }
-
-    // ── Component interface ────────────────────────────────────────────
-
-    @Override
-    public HeroCoreStatsComponent clone() {
-        return new HeroCoreStatsComponent(strength, dexterity, intelligence, faith, vitality, resolve);
-    }
+    public float getResolve() { return resolve; }
+    public void setResolve(float value) { this.resolve = value; }
 
     @Override
     public String toString() {

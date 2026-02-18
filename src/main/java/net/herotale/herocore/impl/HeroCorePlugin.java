@@ -8,10 +8,16 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
 import net.herotale.herocore.api.HeroCore;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.api.event.CombatExitEvent;
+import net.herotale.herocore.api.event.LevelUpEvent;
+import net.herotale.herocore.api.heal.HeroCoreHealEvent;
 import net.herotale.herocore.impl.config.CoreConfig;
 import net.herotale.herocore.impl.config.CoreConfigLoader;
 import net.herotale.herocore.impl.system.AttributeDerivationSystem;
 import net.herotale.herocore.impl.system.HeroCoreSetupSystem;
+import net.herotale.herocore.system.combat.CombatTimeoutSystem;
+import net.herotale.herocore.system.combat.StatusEffectTickSystem;
 import net.herotale.herocore.system.damage.*;
 import net.herotale.herocore.system.heal.*;
 
@@ -45,37 +51,51 @@ public class HeroCorePlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        // 1. Register HeroCore component types
-        HeroCoreComponentRegistry.registerComponents(getEntityStoreRegistry());
+        var reg = getEntityStoreRegistry();
 
-        // 2. Register HolderSystem — ensures HeroCoreStatsComponent on all entities
-        getEntityStoreRegistry().registerSystem(new HeroCoreSetupSystem());
+        // 1. Register HeroCore component types (persistent + non-persistent)
+        HeroCoreComponentRegistry.registerComponents(reg);
 
-        // 3. Register AttributeDerivationSystem (tick system: primary → derived stats)
-        getEntityStoreRegistry().registerSystem(new AttributeDerivationSystem());
+        // 2. Register ECS event types
+        reg.registerEntityEventType(HeroCoreDamageEvent.class);
+        reg.registerEntityEventType(HeroCoreHealEvent.class);
+        reg.registerEntityEventType(LevelUpEvent.class);
+        reg.registerEntityEventType(CombatExitEvent.class);
 
-        // 4. Register damage pipeline (EntityEventSystem instances, ordered via SystemDependency)
-        getEntityStoreRegistry().registerSystem(new AttackDamageBonusSystem());
-        getEntityStoreRegistry().registerSystem(new FallDamageReductionSystem());
-        getEntityStoreRegistry().registerSystem(new ResistanceMitigationSystem(
+        // 3. Register HolderSystem — ensures HeroCoreStatsComponent on all entities
+        reg.registerSystem(new HeroCoreSetupSystem());
+
+        // 4. Register AttributeDerivationSystem (tick system: primary → derived stats)
+        reg.registerSystem(new AttributeDerivationSystem());
+
+        // 5. Register damage pipeline (EntityEventSystem instances, ordered via SystemDependency)
+        reg.registerSystem(new AttackDamageBonusSystem());
+        reg.registerSystem(new FallDamageReductionSystem());
+        reg.registerSystem(new ResistanceMitigationSystem(
                 (float) config.damage().maxResistanceReduction()));
-        getEntityStoreRegistry().registerSystem(new CriticalHitSystem(
+        reg.registerSystem(new CriticalHitSystem(
                 (float) config.damage().critDamageBaseMultiplier()));
-        getEntityStoreRegistry().registerSystem(new LifestealSystem());
-        getEntityStoreRegistry().registerSystem(new MinimumDamageSystem(
+        reg.registerSystem(new LifestealSystem());
+        reg.registerSystem(new MinimumDamageSystem(
                 (float) config.damage().minimumDamage()));
+        reg.registerSystem(new DamageApplicationSystem());
 
-        // 5. Register heal pipeline (EntityEventSystem instances, ordered via SystemDependency)
-        getEntityStoreRegistry().registerSystem(new HealingPowerScalingSystem(
+        // 6. Register heal pipeline (EntityEventSystem instances, ordered via SystemDependency)
+        reg.registerSystem(new HealingPowerScalingSystem(
                 config.heal().healingPowerScalesRegenTick()));
-        getEntityStoreRegistry().registerSystem(new HealingReceivedBonusSystem());
-        getEntityStoreRegistry().registerSystem(new HealCritSystem());
+        reg.registerSystem(new HealingReceivedBonusSystem());
+        reg.registerSystem(new HealCritSystem());
 
-        // 6. Initialize the public API facade
+        // 7. Register tick-based systems (DelayedSystem)
+        reg.registerSystem(new CombatTimeoutSystem(
+                config.resourceRegen().combatTimeoutMs() / 1000f));
+        reg.registerSystem(new StatusEffectTickSystem());
+
+        // 8. Initialize the public API facade
         HeroCore api = HeroCore.initialize();
 
-        LOGGER.at(Level.INFO).log("HeroCore initialized — damage/heal pipelines and " +
-                "AttributeDerivationSystem registered as ECS systems.");
+        LOGGER.at(Level.INFO).log("HeroCore initialized — damage/heal pipelines, " +
+                "combat timeout, status effects, and AttributeDerivationSystem registered.");
     }
 
     @Override

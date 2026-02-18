@@ -9,7 +9,9 @@ import com.hypixel.hytale.component.system.HolderSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import net.herotale.herocore.api.component.CombatStateComponent;
 import net.herotale.herocore.api.component.HeroCoreStatsComponent;
+import net.herotale.herocore.api.component.StatusEffectIndexComponent;
 import net.herotale.herocore.impl.HeroCoreComponentRegistry;
 
 import java.util.logging.Level;
@@ -33,8 +35,11 @@ public class HeroCoreSetupSystem extends HolderSystem<EntityStore> {
 
     @Override
     public void onEntityAdd(Holder<EntityStore> holder, AddReason reason, Store<EntityStore> store) {
-        // Ensure HeroCoreStatsComponent exists — ensureComponent adds it only if absent
+        // Ensure all HeroCore components exist — ensureComponent adds only if absent
         holder.ensureComponent(HeroCoreComponentRegistry.HERO_CORE_STATS);
+        holder.ensureComponent(HeroCoreComponentRegistry.HERO_CORE_PROGRESSION);
+        holder.ensureComponent(HeroCoreComponentRegistry.COMBAT_STATE);
+        holder.ensureComponent(HeroCoreComponentRegistry.STATUS_EFFECT_INDEX);
 
         if (LOGGER.at(Level.FINE).isEnabled()) {
             LOGGER.at(Level.FINE).log("HeroCoreSetupSystem: ensured components for entity (reason=%s)", reason);

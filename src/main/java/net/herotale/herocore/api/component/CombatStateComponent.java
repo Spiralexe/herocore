@@ -1,62 +1,80 @@
 package net.herotale.herocore.api.component;
 
+import com.hypixel.hytale.component.Component;
+import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 /**
  * ECS Component: Tracks an entity's combat state.
  * <p>
  * Determines whether an entity is "in combat" for resource regen bonuses,
  * stamina delay, and other combat-dependent mechanics.
+ * <p>
+ * Duration is tracked as {@code secondsSinceLastDamage} accumulated via {@code dt}
+ * from the world tick — no wall clock ({@code System.currentTimeMillis()}).
+ * This keeps time measurement consistent with the ECS tick system.
+ * <p>
+ * <b>Not persistent</b> — registered with {@code null} codec. Combat state
+ * resets on entity reload.
  */
-public class CombatStateComponent {
+public class CombatStateComponent implements Component<EntityStore> {
 
-    private long lastCombatTimestamp;
-    private long staminaDelayUntil;
-    private boolean forcedOutOfCombat;
-    private final long combatTimeoutMs;
+    private boolean inCombat = false;
+    private float secondsSinceLastDamage = 0f;
 
-    public CombatStateComponent(long combatTimeoutMs) {
-        this.combatTimeoutMs = combatTimeoutMs;
-        this.lastCombatTimestamp = 0;
-        this.staminaDelayUntil = 0;
-        this.forcedOutOfCombat = false;
+    /** Default constructor required by registration factory. */
+    public CombatStateComponent() {}
+
+    /** Copy constructor required by {@link #clone()}. */
+    public CombatStateComponent(CombatStateComponent other) {
+        this.inCombat = other.inCombat;
+        this.secondsSinceLastDamage = other.secondsSinceLastDamage;
     }
 
-    /** Mark the entity as entering combat now. */
-    public void enterCombat() {
-        lastCombatTimestamp = System.currentTimeMillis();
-        forcedOutOfCombat = false;
+    @Override
+    public Component<EntityStore> clone() {
+        return new CombatStateComponent(this);
     }
 
-    /** Force the entity out of combat immediately (e.g., meditate skill). */
-    public void forceOutOfCombat() {
-        forcedOutOfCombat = true;
+    // ── Static ComponentType handle ──────────────────────────────────
+    private static ComponentType<EntityStore, CombatStateComponent> type;
+
+    public static ComponentType<EntityStore, CombatStateComponent> getComponentType() {
+        return type;
     }
 
-    /** Check if the entity is currently in combat. */
+    public static void setComponentType(ComponentType<EntityStore, CombatStateComponent> t) {
+        type = t;
+    }
+
+    // ── API ──────────────────────────────────────────────────────────
+
     public boolean isInCombat() {
-        if (forcedOutOfCombat) return false;
-        if (lastCombatTimestamp == 0) return false;
-        return (System.currentTimeMillis() - lastCombatTimestamp) < combatTimeoutMs;
+        return inCombat;
     }
 
-    /** Get remaining combat timeout in milliseconds (0 if out of combat). */
-    public long getCombatTimeoutRemaining() {
-        if (forcedOutOfCombat) return 0;
-        if (lastCombatTimestamp == 0) return 0;
-        long remaining = combatTimeoutMs - (System.currentTimeMillis() - lastCombatTimestamp);
-        return Math.max(0, remaining);
+    public void enterCombat() {
+        inCombat = true;
+        secondsSinceLastDamage = 0f;
     }
 
-    /** Trigger stamina regen delay. */
-    public void triggerStaminaDelay(long delayMs) {
-        staminaDelayUntil = System.currentTimeMillis() + delayMs;
+    /**
+     * Accumulate elapsed time from the world tick.
+     * Called by {@code CombatTimeoutSystem} each tick.
+     *
+     * @param dt delta time in seconds from the world tick
+     */
+    public void tickElapsed(float dt) {
+        if (inCombat) {
+            secondsSinceLastDamage += dt;
+        }
     }
 
-    /** Check if stamina regen is currently delayed. */
-    public boolean isStaminaRegenDelayed() {
-        return System.currentTimeMillis() < staminaDelayUntil;
+    public float getSecondsSinceLastDamage() {
+        return secondsSinceLastDamage;
     }
 
-    public long getCombatTimeoutMs() {
-        return combatTimeoutMs;
+    public void setInCombat(boolean v) {
+        inCombat = v;
     }
 }
