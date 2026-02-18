@@ -10,7 +10,6 @@ import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsModule;
 
 import net.herotale.herocore.api.component.StatusEffectIndexComponent;
 import net.herotale.herocore.api.component.StatusEffectIndexComponent.EffectEntry;
-import net.herotale.herocore.impl.HeroCoreModifiers;
 
 import java.util.Iterator;
 import java.util.Map;

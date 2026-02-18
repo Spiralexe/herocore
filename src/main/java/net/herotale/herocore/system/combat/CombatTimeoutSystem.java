@@ -1,7 +1,6 @@
 package net.herotale.herocore.system.combat;
 
 import com.hypixel.hytale.component.ArchetypeChunk;
-import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.DelayedSystem;
