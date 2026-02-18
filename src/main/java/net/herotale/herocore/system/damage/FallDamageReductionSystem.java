@@ -1,33 +1,53 @@
 package net.herotale.herocore.system.damage;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.damage.DamageEvent;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 import net.herotale.herocore.api.damage.DamageType;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.damage.DamageFormulas;
+
+import java.util.Set;
 
 /**
- * Reduces fall damage based on the victim's {@code FALL_DAMAGE_REDUCTION} attribute.
- * Runs after attack-damage bonus so base scaling is already applied.
+ * Reduces fall damage based on the victim's FALL_DAMAGE_REDUCTION stat.
+ * Runs after {@link AttackDamageBonusSystem}.
  */
-@SystemOrder(after = "herocore:attack_damage_bonus")
-public class FallDamageReductionSystem implements DamageSystem {
+public class FallDamageReductionSystem extends EntityEventSystem<EntityStore, HeroCoreDamageEvent> {
 
-    private boolean enabled = true;
-
-    @Override public String getId() { return "herocore:fall_damage_reduction"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public FallDamageReductionSystem() {
+        super(HeroCoreDamageEvent.class);
+    }
 
     @Override
-    public void onDamage(DamageEvent event, StatsComponent attackerStats, StatsComponent victimStats) {
+    public Query<EntityStore> getQuery() {
+        return null;
+    }
+
+    @Override
+    public Set<Dependency<EntityStore>> getDependencies() {
+        return Set.of(new SystemDependency<>(Order.AFTER, AttackDamageBonusSystem.class));
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreDamageEvent event) {
+        if (event.isCancelled()) return;
         if (event.getDamageType() != DamageType.FALL) return;
-        if (victimStats == null) return;
-        double fallReduction = victimStats.getValue(RPGAttribute.FALL_DAMAGE_REDUCTION);
-        if (fallReduction > 0) {
-            double reduction = Math.min(fallReduction, 0.9);
-            event.setModifiedAmount(event.getModifiedAmount() * (1.0 - reduction));
-        }
+
+        // Read FALL_DAMAGE_REDUCTION from the victim (the entity this event is dispatched on)
+        int statIndex = HeroCoreStatTypes.getIndex("herocore:fall_damage_reduction");
+        if (statIndex < 0) return;
+
+        float fallReduction = HeroCoreStatTypes.getStatValue(chunk.getReferenceTo(index), statIndex);
+        event.setModifiedAmount(DamageFormulas.applyFallDamageReduction(event.getModifiedAmount(), fallReduction));
     }
 }

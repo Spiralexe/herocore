@@ -1,48 +1,62 @@
 package net.herotale.herocore.system.damage;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.damage.DamageEvent;
-import net.herotale.herocore.api.heal.HealEvent;
-import net.herotale.herocore.api.heal.HealType;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
-import java.util.function.Consumer;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.api.heal.HealType;
+import net.herotale.herocore.api.heal.HeroCoreHealEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.damage.DamageFormulas;
+
+import java.util.Set;
 
 /**
  * Heals the attacker for a percentage of final damage based on the
- * {@code LIFESTEAL} attribute.  Posts a {@link HealEvent} via the
- * provided consumer (which should post to the entity event bus).
- * Runs after critical-hit so lifesteal is calculated on crit-amplified damage.
+ * LIFESTEAL stat. Posts a {@link HeroCoreHealEvent} via the command buffer
+ * so it flows through the ECS heal pipeline.
+ * Runs after {@link CriticalHitSystem}.
  */
-@SystemOrder(after = "herocore:critical_hit")
-public class LifestealSystem implements DamageSystem {
+public class LifestealSystem extends EntityEventSystem<EntityStore, HeroCoreDamageEvent> {
 
-    private final Consumer<HealEvent> healEventConsumer;
-    private boolean enabled = true;
-
-    public LifestealSystem(Consumer<HealEvent> healEventConsumer) { this.healEventConsumer = healEventConsumer; }
-
-    @Override public String getId() { return "herocore:lifesteal"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public LifestealSystem() {
+        super(HeroCoreDamageEvent.class);
+    }
 
     @Override
-    public void onDamage(DamageEvent event, StatsComponent attackerStats, StatsComponent victimStats) {
-        if (attackerStats == null) return;
+    public Query<EntityStore> getQuery() {
+        return null;
+    }
+
+    @Override
+    public Set<Dependency<EntityStore>> getDependencies() {
+        return Set.of(new SystemDependency<>(Order.AFTER, CriticalHitSystem.class));
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreDamageEvent event) {
+        if (event.isCancelled()) return;
         if (event.getAttacker() == null) return;
-        double lifesteal = attackerStats.getValue(RPGAttribute.LIFESTEAL);
-        if (lifesteal <= 0) return;
-        double healAmount = event.getModifiedAmount() * lifesteal;
-        if (healAmount > 0 && healEventConsumer != null) {
-            HealEvent healEvent = HealEvent.builder()
-                    .healer(event.getAttacker())
-                    .target(event.getAttacker())
-                    .rawAmount(healAmount)
-                    .healType(HealType.PASSIVE)
-                    .build();
-            healEventConsumer.accept(healEvent);
+
+        int lifestealIndex = HeroCoreStatTypes.getIndex("herocore:lifesteal");
+        if (lifestealIndex < 0) return;
+
+        float lifesteal = HeroCoreStatTypes.getStatValue(event.getAttacker(), lifestealIndex);
+        float healAmount = DamageFormulas.computeLifestealHeal(event.getModifiedAmount(), lifesteal);
+
+        if (healAmount > 0) {
+            // Dispatch heal event on the attacker via the command buffer
+            HeroCoreHealEvent healEvent = new HeroCoreHealEvent(
+                    event.getAttacker(), HealType.PASSIVE, healAmount);
+            cb.invoke(event.getAttacker(), healEvent);
         }
     }
 }

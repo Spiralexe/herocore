@@ -1,38 +1,46 @@
 package net.herotale.herocore.system.heal;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.heal.HealEvent;
-import net.herotale.herocore.api.heal.HealType;
-import net.herotale.herocore.api.system.HealSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import net.herotale.herocore.api.heal.HeroCoreHealEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.heal.HealFormulas;
 
 /**
- * Scales healing amounts by the healer's {@code HEALING_POWER} attribute.
- * Applies to spell and passive heals. Optionally scales regen ticks
- * (configurable).
+ * Scales healing amounts by the healer's HEALING_POWER stat.
+ * Applies to spell and passive heals. Optionally scales regen ticks.
  * Runs first among heal systems — no ordering dependencies.
  */
-@SystemOrder
-public class HealingPowerScalingSystem implements HealSystem {
+public class HealingPowerScalingSystem extends EntityEventSystem<EntityStore, HeroCoreHealEvent> {
 
     private final boolean scalesRegenTick;
-    private boolean enabled = true;
 
-    public HealingPowerScalingSystem(boolean scalesRegenTick) { this.scalesRegenTick = scalesRegenTick; }
-
-    @Override public String getId() { return "herocore:healing_power_scaling"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public HealingPowerScalingSystem(boolean scalesRegenTick) {
+        super(HeroCoreHealEvent.class);
+        this.scalesRegenTick = scalesRegenTick;
+    }
 
     @Override
-    public void onHeal(HealEvent event, StatsComponent healerStats, StatsComponent targetStats) {
-        HealType type = event.getHealType();
-        boolean shouldScale = (type == HealType.SPELL || type == HealType.PASSIVE);
-        if (!shouldScale && type == HealType.REGEN_TICK && scalesRegenTick) { shouldScale = true; }
-        if (shouldScale && healerStats != null) {
-            double healingPower = healerStats.getValue(RPGAttribute.HEALING_POWER);
-            event.setModifiedAmount(event.getModifiedAmount() * (1.0 + healingPower));
-        }
+    public Query<EntityStore> getQuery() {
+        return null;
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreHealEvent event) {
+        if (event.isCancelled()) return;
+        if (event.getHealer() == null) return;
+
+        int hpIndex = HeroCoreStatTypes.getIndex("herocore:healing_power");
+        if (hpIndex < 0) return;
+
+        float healingPower = HeroCoreStatTypes.getStatValue(event.getHealer(), hpIndex);
+        event.setModifiedAmount(HealFormulas.applyHealingPowerScaling(
+                event.getModifiedAmount(), healingPower, event.getHealType(), scalesRegenTick));
     }
 }

@@ -1,7 +1,5 @@
 package net.herotale.herocore.impl.leveling;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
 import net.herotale.herocore.api.event.LevelDownEvent;
 import net.herotale.herocore.api.event.LevelUpEvent;
 import net.herotale.herocore.api.leveling.*;
@@ -10,7 +8,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Implementation of the {@link LevelingRegistry}.
@@ -22,22 +19,18 @@ public class LevelingRegistryImpl implements LevelingRegistry {
 
     private final Map<String, LevelingProfile> profiles = new ConcurrentHashMap<>();
     private final Map<String, Map<UUID, PlayerLevelData>> playerData = new ConcurrentHashMap<>();
-    private final Function<UUID, StatsComponent> statsProvider;
     private final Map<XPSource, Double> sourceWeights;
     private final Consumer<LevelUpEvent> levelUpSink;
     private final Consumer<LevelDownEvent> levelDownSink;
 
     /**
-     * @param statsProvider  resolves per-entity StatsComponent
      * @param sourceWeights  XP source weights
      * @param levelUpSink    receives level-up events
      * @param levelDownSink  receives level-down events
      */
-    public LevelingRegistryImpl(Function<UUID, StatsComponent> statsProvider,
-                                Map<XPSource, Double> sourceWeights,
+    public LevelingRegistryImpl(Map<XPSource, Double> sourceWeights,
                                 Consumer<LevelUpEvent> levelUpSink,
                                 Consumer<LevelDownEvent> levelDownSink) {
-        this.statsProvider = statsProvider;
         this.sourceWeights = sourceWeights;
         this.levelUpSink = levelUpSink;
         this.levelDownSink = levelDownSink;
@@ -70,10 +63,9 @@ public class LevelingRegistryImpl implements LevelingRegistry {
         double sourceWeight = sourceWeights.getOrDefault(source, 1.0);
         amount *= sourceWeight;
 
-        // Apply XP_GAIN_MULTIPLIER attribute
-        StatsComponent stats = statsProvider.apply(playerUuid);
-        double xpMultiplier = stats.getValue(RPGAttribute.XP_GAIN_MULTIPLIER);
-        amount *= (1.0 + xpMultiplier);
+        // TODO: XP_GAIN_MULTIPLIER should be read from EntityStatMap via Ref<EntityStore>
+        // when a Ref-based XP granting API is available. For now, the multiplier is
+        // only applied through the source weight system.
 
         PlayerLevelData data = getOrCreateData(profileId, playerUuid);
         int oldLevel = data.level;

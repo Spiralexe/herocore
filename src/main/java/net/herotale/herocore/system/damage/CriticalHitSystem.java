@@ -1,45 +1,73 @@
 package net.herotale.herocore.system.damage;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.damage.DamageEvent;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 import net.herotale.herocore.api.damage.DamageFlag;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.damage.DamageFormulas;
 
 import java.util.Random;
+import java.util.Set;
 
 /**
- * Rolls critical hits based on the attacker's {@code CRIT_CHANCE} and
- * applies the {@code CRIT_DAMAGE_MULTIPLIER}.
- * Runs after resistance mitigation so the crit multiplies post-armor damage.
+ * Rolls critical hits based on the attacker's CRIT_CHANCE and
+ * applies the CRIT_DAMAGE_MULTIPLIER.
+ * Runs after {@link ResistanceMitigationSystem}.
  */
-@SystemOrder(after = "herocore:resistance_mitigation")
-public class CriticalHitSystem implements DamageSystem {
+public class CriticalHitSystem extends EntityEventSystem<EntityStore, HeroCoreDamageEvent> {
 
-    private final double fallbackCritMultiplier;
+    private final float fallbackCritMultiplier;
     private final Random random;
-    private boolean enabled = true;
 
-    public CriticalHitSystem(double fallbackCritMultiplier) { this(fallbackCritMultiplier, new Random()); }
-    public CriticalHitSystem(double fallbackCritMultiplier, Random random) {
+    public CriticalHitSystem(float fallbackCritMultiplier) {
+        this(fallbackCritMultiplier, new Random());
+    }
+
+    public CriticalHitSystem(float fallbackCritMultiplier, Random random) {
+        super(HeroCoreDamageEvent.class);
         this.fallbackCritMultiplier = fallbackCritMultiplier;
         this.random = random;
     }
 
-    @Override public String getId() { return "herocore:critical_hit"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    @Override
+    public Query<EntityStore> getQuery() {
+        return null;
+    }
 
     @Override
-    public void onDamage(DamageEvent event, StatsComponent attackerStats, StatsComponent victimStats) {
-        if (attackerStats == null) return;
-        double critChance = attackerStats.getValue(RPGAttribute.CRIT_CHANCE);
-        if (critChance > 0 && random.nextDouble() < critChance) {
-            double critMultiplier = attackerStats.getValue(RPGAttribute.CRIT_DAMAGE_MULTIPLIER);
-            if (critMultiplier <= 0) { critMultiplier = fallbackCritMultiplier; }
-            event.setModifiedAmount(event.getModifiedAmount() * critMultiplier);
-            event.addFlag(DamageFlag.CRIT);
+    public Set<Dependency<EntityStore>> getDependencies() {
+        return Set.of(new SystemDependency<>(Order.AFTER, ResistanceMitigationSystem.class));
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreDamageEvent event) {
+        if (event.isCancelled()) return;
+        if (event.getAttacker() == null) return;
+
+        int critChanceIndex = HeroCoreStatTypes.getIndex("herocore:crit_chance");
+        if (critChanceIndex < 0) return;
+
+        float critChance = HeroCoreStatTypes.getStatValue(event.getAttacker(), critChanceIndex);
+        if (DamageFormulas.rollCrit(critChance, random.nextFloat())) {
+            int critMultIndex = HeroCoreStatTypes.getIndex("herocore:crit_damage_multiplier");
+            float critMultiplier = (critMultIndex >= 0)
+                    ? HeroCoreStatTypes.getStatValue(event.getAttacker(), critMultIndex)
+                    : 0.0f;
+            if (critMultiplier <= 0) {
+                critMultiplier = fallbackCritMultiplier;
+            }
+            event.setModifiedAmount(DamageFormulas.applyCritMultiplier(event.getModifiedAmount(), critMultiplier));
+            event.setCrit(true);
         }
     }
 }

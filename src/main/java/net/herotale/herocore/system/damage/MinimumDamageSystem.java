@@ -1,28 +1,47 @@
 package net.herotale.herocore.system.damage;
 
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.damage.DamageEvent;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.impl.damage.DamageFormulas;
+
+import java.util.Set;
 
 /**
  * Enforces a configurable minimum damage floor.
- * Runs last — after all other modifiers have had their say.
+ * Runs last in the damage pipeline — after all other modifiers.
  */
-@SystemOrder(after = "herocore:lifesteal")
-public class MinimumDamageSystem implements DamageSystem {
+public class MinimumDamageSystem extends EntityEventSystem<EntityStore, HeroCoreDamageEvent> {
 
-    private final double minimumDamage;
-    private boolean enabled = true;
+    private final float minimumDamage;
 
-    public MinimumDamageSystem(double minimumDamage) { this.minimumDamage = minimumDamage; }
-
-    @Override public String getId() { return "herocore:minimum_damage"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public MinimumDamageSystem(float minimumDamage) {
+        super(HeroCoreDamageEvent.class);
+        this.minimumDamage = minimumDamage;
+    }
 
     @Override
-    public void onDamage(DamageEvent event, StatsComponent attackerStats, StatsComponent victimStats) {
-        event.setModifiedAmount(Math.max(event.getModifiedAmount(), minimumDamage));
+    public Query<EntityStore> getQuery() {
+        return null;
+    }
+
+    @Override
+    public Set<Dependency<EntityStore>> getDependencies() {
+        return Set.of(new SystemDependency<>(Order.AFTER, LifestealSystem.class));
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreDamageEvent event) {
+        if (event.isCancelled()) return;
+        event.setModifiedAmount(DamageFormulas.applyMinimumDamage(event.getModifiedAmount(), minimumDamage));
     }
 }
