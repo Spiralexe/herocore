@@ -1,6 +1,8 @@
 package net.herotale.herocore.system.combat;
 
 import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.DelayedSystem;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -30,7 +32,8 @@ public class CombatTimeoutSystem extends DelayedSystem<EntityStore> {
     @Override
     public void delayedTick(float dt, int systemIndex, Store<EntityStore> store) {
         // Iterate entity chunks matching CombatStateComponent query
-        store.forEachChunk(CombatStateComponent.getComponentType(), (chunk, cmd) -> {
+        store.forEachChunk(CombatStateComponent.getComponentType(),
+                (ArchetypeChunk<EntityStore> chunk, CommandBuffer<EntityStore> cmd) -> {
             for (int i = 0; i < chunk.size(); i++) {
                 CombatStateComponent combat = chunk.getComponent(i, CombatStateComponent.getComponentType());
                 if (combat == null || !combat.isInCombat()) continue;
