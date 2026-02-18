@@ -65,6 +65,40 @@ Systems never call each other directly — they react to events in the order def
 4. **Testable** — all math is pure functions, no server instance required for unit tests
 5. **Extensible** — downstream plugins add their own components/systems
 
+### Implementation details (developer‑focused)
+
+This section documents how the README maps to the actual internals so automated auditors / downstream plugins can reason about HeroCore's ECS wiring.
+
+- Plugin wiring
+  - Entry point: [`net.herotale.herocore.impl.HeroCorePlugin`](src/main/java/net/herotale/herocore/impl/HeroCorePlugin.java) — registers default systems in `setup()` via `registerDamageSystem` / `registerHealSystem` and applies per-system config overrides (`applySystemConfig`).
+  - API facade: [`net.herotale.herocore.api.HeroCore`](src/main/java/net/herotale/herocore/api/HeroCore.java) is initialized by the plugin and receives system lookup + suppliers.
+
+- Systems & ordering
+  - Systems are independent event handlers (no central orchestrator) and are ordered with the [`@SystemOrder`](src/main/java/net/herotale/herocore/api/system/SystemOrder.java) annotation; the Hytale event bus dispatches them.
+  - Default damage systems (registered in `HeroCorePlugin.setup()`): AttackDamageBonusSystem, FallDamageReductionSystem, ResistanceMitigationSystem, CriticalHitSystem, LifestealSystem, MinimumDamageSystem.
+  - Default heal systems: HealingPowerScalingSystem, HealingReceivedBonusSystem, HealCritSystem.
+  - Systems can be enabled/disabled from config (`CoreConfig.systemOverrides`) — see [`net.herotale.herocore.impl.config.CoreConfig`](src/main/java/net/herotale/herocore/impl/config/CoreConfig.java) and [src/main/resources/hero-core-defaults.json](src/main/resources/hero-core-defaults.json).
+
+- Events & components (data-only, testable)
+  - Events are plain data carriers: [`net.herotale.herocore.api.damage.DamageEvent`](src/main/java/net/herotale/herocore/api/damage/DamageEvent.java), [`net.herotale.herocore.api.heal.HealEvent`](src/main/java/net/herotale/herocore/api/heal/HealEvent.java). Systems mutate `modifiedAmount`, can set `cancelled`, and set flags.
+  - Core ECS components: [`net.herotale.herocore.api.component.StatsComponent`](src/main/java/net/herotale/herocore/api/component/StatsComponent.java), [`ResourcePoolComponent`](src/main/java/net/herotale/herocore/api/component/ResourcePoolComponent.java), [`StatusEffectsComponent`](src/main/java/net/herotale/herocore/api/component/StatusEffectsComponent.java).
+  - Attribute derivation: computed by [`net.herotale.herocore.impl.attribute.AttributeCalculator`](src/main/java/net/herotale/herocore/impl/attribute/AttributeCalculator.java) using values from `CoreConfig.attributeDerivation`.
+
+- Bridge layer (what is/is not pushed to vanilla)
+  - Physical is the only native-bridged value — use [`net.herotale.herocore.impl.bridge.DefenseBridge`](src/main/java/net/herotale/herocore/impl/bridge/DefenseBridge.java). `DefenseBridge.apply()` writes named `StaticModifier` entries on the Hytale `EntityStatMap`; `remove()` clears them.
+  - Other engine-sync bridges: [`MovementSpeedBridge`](src/main/java/net/herotale/herocore/impl/bridge/MovementSpeedBridge.java), [`AttackSpeedBridge`](src/main/java/net/herotale/herocore/impl/bridge/AttackSpeedBridge.java), [`MiningSpeedBridge`](src/main/java/net/herotale/herocore/impl/bridge/MiningSpeedBridge.java).
+  - Rule: call `bridge.apply(stats)` after any stat recalculation (level, gear, buff) and `DefenseBridge.remove()` on disconnect/cleanup.
+
+- Config & defaults
+  - Defaults: [src/main/resources/hero-core-defaults.json](src/main/resources/hero-core-defaults.json)
+  - Loaded into: [`net.herotale.herocore.impl.config.CoreConfig`](src/main/java/net/herotale/herocore/impl/config/CoreConfig.java)
+
+- Tests & best practices
+  - Unit tests for systems: [`src/test/java/net/herotale/herocore/system/damage/DamageSystemsTest.java`](src/test/java/net/herotale/herocore/system/damage/DamageSystemsTest.java), [`src/test/java/net/herotale/herocore/system/heal/HealSystemsTest.java`](src/test/java/net/herotale/herocore/system/heal/HealSystemsTest.java).
+  - Keep systems thin, avoid blocking I/O on the main thread, use bounded executors for async work, and prefer composition (services + components) over inheritance.
+
+The above mirrors the actual code paths and should make automated / manual reviews against the Hytale ECS straightforward.
+
 ---
 
 ## Installation
