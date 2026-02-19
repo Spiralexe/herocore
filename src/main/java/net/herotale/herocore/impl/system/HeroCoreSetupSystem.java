@@ -1,5 +1,7 @@
 package net.herotale.herocore.impl.system;
 
+import javax.annotation.Nonnull;
+
 import com.hypixel.hytale.component.AddReason;
 import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.RemoveReason;
@@ -28,9 +30,11 @@ public class HeroCoreSetupSystem extends HolderSystem<EntityStore> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
+    @Nonnull
     @Override
     public Query<EntityStore> getQuery() {
-        return null;
+        // Match all entities — Query.any() is the universal matcher
+        return Query.any();
     }
 
     @Override

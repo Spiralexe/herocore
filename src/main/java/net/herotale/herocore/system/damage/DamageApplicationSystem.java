@@ -15,6 +15,7 @@ import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntitySta
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import net.herotale.herocore.api.component.CombatStateComponent;
+import net.herotale.herocore.api.component.HeroCoreStatsComponent;
 import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
 
 import java.util.Set;
@@ -36,7 +37,7 @@ public class DamageApplicationSystem extends EntityEventSystem<EntityStore, Hero
 
     @Override
     public Query<EntityStore> getQuery() {
-        return null;
+        return HeroCoreStatsComponent.getComponentType();
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
+import net.herotale.herocore.api.component.HeroCoreStatsComponent;
 import net.herotale.herocore.api.damage.DamageType;
 import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
 import net.herotale.herocore.impl.HeroCoreStatTypes;
@@ -70,7 +71,7 @@ public class ResistanceMitigationSystem extends EntityEventSystem<EntityStore, H
 
     @Override
     public Query<EntityStore> getQuery() {
-        return null;
+        return HeroCoreStatsComponent.getComponentType();
     }
 
     @Override
