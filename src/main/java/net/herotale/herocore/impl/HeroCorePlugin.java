@@ -88,7 +88,7 @@ public class HeroCorePlugin extends JavaPlugin {
 
         // 7. Register tick-based systems (DelayedSystem)
         reg.registerSystem(new CombatTimeoutSystem(
-                config.resourceRegen().combatTimeoutMs() / 1000f));
+                config.resourceRegen().combatTimeoutSeconds()));
         reg.registerSystem(new StatusEffectTickSystem());
 
         // 8. Initialize the public API facade

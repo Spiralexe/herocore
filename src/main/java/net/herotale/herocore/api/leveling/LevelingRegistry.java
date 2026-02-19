@@ -1,11 +1,16 @@
 package net.herotale.herocore.api.leveling;
 
-import java.util.UUID;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
  * Registry of named leveling profiles. Any plugin can register a profile
  * and grant XP to it. The {@code XP_GAIN_MULTIPLIER} attribute is honored
  * globally across all profiles.
+ * <p>
+ * All runtime methods take {@code Ref<EntityStore>} — UUID is for persistence only.
  */
 public interface LevelingRegistry {
 
@@ -32,45 +37,52 @@ public interface LevelingRegistry {
     LevelingProfile getProfile(String profileId);
 
     /**
-     * Grant XP to a player for a specific profile.
+     * Grant XP to an entity for a specific profile.
      * <ol>
-     *   <li>Multiply amount by player's {@code XP_GAIN_MULTIPLIER}</li>
+     *   <li>Multiply amount by entity's {@code XP_GAIN_MULTIPLIER} stat</li>
      *   <li>Add to stored XP for this profile</li>
-    *   <li>Check if new XP total crosses level threshold</li>
-    *   <li>If yes: update level, fire {@code LevelUpEvent} or {@code LevelDownEvent}</li>
+     *   <li>Check if new XP total crosses level threshold</li>
+     *   <li>If yes: update level, dispatch {@code LevelUpEvent} or {@code LevelDownEvent}
+     *       via {@code cb.invoke()}</li>
      * </ol>
      *
-     * @param playerUuid the player UUID
-     * @param profileId  the leveling profile ID
-     * @param amount     raw XP amount (before multipliers)
-     * @param source     where the XP came from
+     * @param entityRef the live entity handle
+     * @param store     the entity store (for reading components)
+     * @param cb        command buffer for dispatching level events
+     * @param profileId the leveling profile ID
+     * @param amount    raw XP amount (before multipliers)
+     * @param source    where the XP came from
      */
-    void grantXP(UUID playerUuid, String profileId, double amount, XPSource source);
+    void grantXP(Ref<EntityStore> entityRef, Store<EntityStore> store,
+                 CommandBuffer<EntityStore> cb, String profileId, double amount, XPSource source);
 
     /**
-     * Get the current level for a player in a profile.
+     * Get the current level for an entity in a profile.
      *
-     * @param playerUuid the player UUID
-     * @param profileId  the profile ID
+     * @param entityRef the live entity handle
+     * @param store     the entity store (for reading components)
+     * @param profileId the profile ID
      * @return the current level, or 1 if no data
      */
-    int getLevel(UUID playerUuid, String profileId);
+    int getLevel(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId);
 
     /**
-     * Get the current cumulative XP for a player in a profile.
+     * Get the current cumulative XP for an entity in a profile.
      *
-     * @param playerUuid the player UUID
-     * @param profileId  the profile ID
+     * @param entityRef the live entity handle
+     * @param store     the entity store (for reading components)
+     * @param profileId the profile ID
      * @return the cumulative XP, or 0 if no data
      */
-    long getXP(UUID playerUuid, String profileId);
+    long getXP(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId);
 
     /**
      * Set the XP and level directly (for admin/data loading).
      *
-     * @param playerUuid the player UUID
-     * @param profileId  the profile ID
-     * @param xp         the cumulative XP to set
+     * @param entityRef the live entity handle
+     * @param store     the entity store (for reading/writing components)
+     * @param profileId the profile ID
+     * @param xp        the cumulative XP to set
      */
-    void setXP(UUID playerUuid, String profileId, long xp);
+    void setXP(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId, long xp);
 }

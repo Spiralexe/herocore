@@ -33,9 +33,9 @@
     "herocore:heal_crit": { "enabled": true }
   },
   "resourceRegen": {
-    "tickIntervalMs": 2000,
+    "tickIntervalSeconds": 2.0,
     "outOfCombatBonusMultiplier": 3.0,
-    "combatTimeoutMs": 8000
+    "combatTimeoutSeconds": 8.0
   },
   "leveling": {
     "defaultMaxLevel": 60,

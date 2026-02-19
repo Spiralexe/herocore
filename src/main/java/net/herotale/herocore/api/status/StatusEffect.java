@@ -5,17 +5,21 @@ import java.util.Objects;
 /**
  * Represents a status effect applied to an entity.
  * Hero-Core tracks presence, duration, stacks, and source — not behavior.
+ * <p>
+ * Duration is measured in <b>seconds</b> at every level — matching the
+ * {@code StatusEffectIndexComponent}'s {@code remainingSeconds} field and
+ * the {@code dt}-based decrement in {@code StatusEffectTickSystem}.
  */
 public final class StatusEffect {
 
     private final String id;
-    private final long durationMs;   // -1 = permanent until removed
+    private final float durationSeconds;   // -1 = permanent until removed
     private final String source;
     private final int stacks;
 
     private StatusEffect(Builder builder) {
         this.id = Objects.requireNonNull(builder.id, "Status id must not be null");
-        this.durationMs = builder.durationMs;
+        this.durationSeconds = builder.durationSeconds;
         this.source = Objects.requireNonNull(builder.source, "Status source must not be null");
         this.stacks = builder.stacks;
     }
@@ -28,8 +32,9 @@ public final class StatusEffect {
         return id;
     }
 
-    public long getDurationMs() {
-        return durationMs;
+    /** Duration in seconds. Negative means permanent until explicitly removed. */
+    public float getDurationSeconds() {
+        return durationSeconds;
     }
 
     public String getSource() {
@@ -41,12 +46,12 @@ public final class StatusEffect {
     }
 
     public boolean isPermanent() {
-        return durationMs < 0;
+        return durationSeconds < 0;
     }
 
     public static final class Builder {
         private String id;
-        private long durationMs = -1;
+        private float durationSeconds = -1f;
         private String source;
         private int stacks = 1;
 
@@ -57,8 +62,9 @@ public final class StatusEffect {
             return this;
         }
 
-        public Builder duration(long durationMs) {
-            this.durationMs = durationMs;
+        /** Set the effect duration in seconds. Pass a negative value for permanent effects. */
+        public Builder durationSeconds(float durationSeconds) {
+            this.durationSeconds = durationSeconds;
             return this;
         }
 

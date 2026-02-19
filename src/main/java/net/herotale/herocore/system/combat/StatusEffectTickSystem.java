@@ -16,9 +16,17 @@ import java.util.Map;
 
 /**
  * DelayedSystem that ticks status effect durations down and removes expired
- * effects (both the index entry and the corresponding EntityStatMap modifiers).
+ * effects. This system <b>owns full cleanup</b>: when an effect expires, it
+ * removes both the index entry and all tracked {@code StaticModifier} entries
+ * from the entity's {@code EntityStatMap}.
  * <p>
- * Fires every 0.25 seconds for responsive effect expiry without per-tick overhead.
+ * Fires every 0.25 seconds (intentional — provides responsive effect expiry
+ * without per-tick overhead). The combat timeout system fires at 0.5s for
+ * lower-frequency checks.
+ * <p>
+ * <b>Cleanup contract:</b> When applying an effect, callers must register
+ * modifier keys via {@link EffectEntry#trackModifier(int, String)} so this
+ * system knows which modifiers to remove on expiry.
  */
 public class StatusEffectTickSystem extends DelayedSystem<EntityStore> {
 
@@ -38,10 +46,8 @@ public class StatusEffectTickSystem extends DelayedSystem<EntityStore> {
                 Map<String, EffectEntry> effects = index.getActiveEffects();
                 if (effects.isEmpty()) continue;
 
-                // Get the entity's stat map for modifier removal
-                EntityStatMap statMap = store.getComponent(
-                        chunk.getReferenceTo(i),
-                        EntityStatsModule.get().getEntityStatMapComponentType());
+                // Lazy-loaded — only fetched if an effect actually expires
+                EntityStatMap statMap = null;
 
                 Iterator<Map.Entry<String, EffectEntry>> it = effects.entrySet().iterator();
                 while (it.hasNext()) {
@@ -51,9 +57,16 @@ public class StatusEffectTickSystem extends DelayedSystem<EntityStore> {
                     effect.remainingSeconds -= dt;
 
                     if (effect.remainingSeconds <= 0f) {
-                        // Effect expired — remove all its modifiers from EntityStatMap
-                        if (statMap != null) {
-                            removeEffectModifiers(statMap, entry.getKey());
+                        // Effect expired — remove all its tracked modifiers from EntityStatMap
+                        if (!effect.getModifierRefs().isEmpty()) {
+                            if (statMap == null) {
+                                statMap = store.getComponent(
+                                        chunk.getReferenceTo(i),
+                                        EntityStatsModule.get().getEntityStatMapComponentType());
+                            }
+                            if (statMap != null) {
+                                removeEffectModifiers(statMap, effect);
+                            }
                         }
                         it.remove();
                     }
@@ -63,14 +76,13 @@ public class StatusEffectTickSystem extends DelayedSystem<EntityStore> {
     }
 
     /**
-     * Removes all modifiers keyed with the effect prefix pattern for the given effect ID.
-     * Convention: effect modifiers use key {@code "HC_effect_{effectId}_{stat}"}.
+     * Removes all modifier entries that were tracked by this effect.
+     * Each {@link EffectEntry.ModifierRef} contains the stat index and key
+     * needed to call {@code EntityStatMap.removeModifier()}.
      */
-    private void removeEffectModifiers(EntityStatMap statMap, String effectId) {
-        // We cannot enumerate all stat indices, so we rely on the convention that
-        // effects register their modifier keys via HeroCoreModifiers.effect(effectId, stat).
-        // The actual removal is best done by the system that applied the effect,
-        // which knows which stat indices it modified. This is a safety sweep.
-        // In practice, effect application code should track and clean up its own keys.
+    private void removeEffectModifiers(EntityStatMap statMap, EffectEntry effect) {
+        for (EffectEntry.ModifierRef ref : effect.getModifierRefs()) {
+            statMap.removeModifier(ref.statIndex(), ref.modifierKey());
+        }
     }
 }

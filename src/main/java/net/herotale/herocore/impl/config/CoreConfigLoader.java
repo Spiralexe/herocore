@@ -121,9 +121,9 @@ public final class CoreConfigLoader {
         // Resource regen
         JsonObject rr = root.getAsJsonObject("resourceRegen");
         CoreConfig.ResourceRegenConfig resourceRegen = new CoreConfig.ResourceRegenConfig(
-                getLong(rr, "tickIntervalMs", 2000),
+                getFloat(rr, "tickIntervalSeconds", 2.0f),
                 getDouble(rr, "outOfCombatBonusMultiplier", 3.0),
-                getLong(rr, "combatTimeoutMs", 8000)
+                getFloat(rr, "combatTimeoutSeconds", 8.0f)
         );
 
         // Leveling
@@ -197,7 +197,7 @@ public final class CoreConfigLoader {
                         "ARCANE", "ELEMENTAL_RESIST_ARCANE"
                 )),
                 new CoreConfig.HealConfig(1.5, false, true),
-                new CoreConfig.ResourceRegenConfig(2000, 3.0, 8000),
+                new CoreConfig.ResourceRegenConfig(2.0f, 3.0, 8.0f),
                 new CoreConfig.LevelingConfig(60, Map.of(
                         "KILL", 1.0, "QUEST", 1.0,
                         "CRAFTING", 0.8, "GATHERING", 0.7,
@@ -312,6 +312,11 @@ public final class CoreConfigLoader {
 
     private static double getDouble(JsonObject obj, String key, double fallback) {
         if (obj != null && obj.has(key)) return obj.get(key).getAsDouble();
+        return fallback;
+    }
+
+    private static float getFloat(JsonObject obj, String key, float fallback) {
+        if (obj != null && obj.has(key)) return obj.get(key).getAsFloat();
         return fallback;
     }
 

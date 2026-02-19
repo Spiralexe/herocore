@@ -36,9 +36,9 @@ public record CoreConfig(
     ) {}
 
     public record ResourceRegenConfig(
-            long tickIntervalMs,
+            float tickIntervalSeconds,
             double outOfCombatBonusMultiplier,
-            long combatTimeoutMs
+            float combatTimeoutSeconds
     ) {}
 
     public record LevelingConfig(
