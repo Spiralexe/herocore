@@ -1,9 +1,12 @@
 package net.herotale.herocore.system.combat;
 
+import javax.annotation.Nonnull;
+
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.component.system.DelayedSystem;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.tick.DelayedEntitySystem;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsModule;
@@ -15,9 +18,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * DelayedSystem that ticks status effect durations down and removes expired
- * effects. This system <b>owns full cleanup</b>: when an effect expires, it
- * removes both the index entry and all tracked {@code StaticModifier} entries
+ * {@link DelayedEntitySystem} that ticks status effect durations down and removes
+ * expired effects. This system <b>owns full cleanup</b>: when an effect expires,
+ * it removes both the index entry and all tracked {@code StaticModifier} entries
  * from the entity's {@code EntityStatMap}.
  * <p>
  * Fires every 0.25 seconds (intentional — provides responsive effect expiry
@@ -28,51 +31,52 @@ import java.util.Map;
  * modifier keys via {@link EffectEntry#trackModifier(int, String)} so this
  * system knows which modifiers to remove on expiry.
  */
-public class StatusEffectTickSystem extends DelayedSystem<EntityStore> {
+public class StatusEffectTickSystem extends DelayedEntitySystem<EntityStore> {
 
     public StatusEffectTickSystem() {
         super(0.25f); // tick every 0.25 seconds
     }
 
     @Override
-    public void delayedTick(float dt, int systemIndex, Store<EntityStore> store) {
-        store.forEachChunk(StatusEffectIndexComponent.getComponentType(),
-                (ArchetypeChunk<EntityStore> chunk, CommandBuffer<EntityStore> cmd) -> {
-            for (int i = 0; i < chunk.size(); i++) {
-                StatusEffectIndexComponent index = chunk.getComponent(
-                        i, StatusEffectIndexComponent.getComponentType());
-                if (index == null) continue;
+    public Query<EntityStore> getQuery() {
+        return StatusEffectIndexComponent.getComponentType();
+    }
 
-                Map<String, EffectEntry> effects = index.getActiveEffects();
-                if (effects.isEmpty()) continue;
+    @Override
+    public void tick(float dt, int index, @Nonnull ArchetypeChunk<EntityStore> chunk,
+                     @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> cb) {
+        StatusEffectIndexComponent idx = chunk.getComponent(
+                index, StatusEffectIndexComponent.getComponentType());
+        if (idx == null) return;
 
-                // Lazy-loaded — only fetched if an effect actually expires
-                EntityStatMap statMap = null;
+        Map<String, EffectEntry> effects = idx.getActiveEffects();
+        if (effects.isEmpty()) return;
 
-                Iterator<Map.Entry<String, EffectEntry>> it = effects.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<String, EffectEntry> entry = it.next();
-                    EffectEntry effect = entry.getValue();
+        // Lazy-loaded — only fetched if an effect actually expires
+        EntityStatMap statMap = null;
 
-                    effect.remainingSeconds -= dt;
+        Iterator<Map.Entry<String, EffectEntry>> it = effects.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, EffectEntry> entry = it.next();
+            EffectEntry effect = entry.getValue();
 
-                    if (effect.remainingSeconds <= 0f) {
-                        // Effect expired — remove all its tracked modifiers from EntityStatMap
-                        if (!effect.getModifierRefs().isEmpty()) {
-                            if (statMap == null) {
-                                statMap = store.getComponent(
-                                        chunk.getReferenceTo(i),
-                                        EntityStatsModule.get().getEntityStatMapComponentType());
-                            }
-                            if (statMap != null) {
-                                removeEffectModifiers(statMap, effect);
-                            }
-                        }
-                        it.remove();
+            effect.remainingSeconds -= dt;
+
+            if (effect.remainingSeconds <= 0f) {
+                // Effect expired — remove all its tracked modifiers from EntityStatMap
+                if (!effect.getModifierRefs().isEmpty()) {
+                    if (statMap == null) {
+                        statMap = store.getComponent(
+                                chunk.getReferenceTo(index),
+                                EntityStatsModule.get().getEntityStatMapComponentType());
+                    }
+                    if (statMap != null) {
+                        removeEffectModifiers(statMap, effect);
                     }
                 }
+                it.remove();
             }
-        });
+        }
     }
 
     /**

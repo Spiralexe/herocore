@@ -86,7 +86,7 @@ public class HeroCorePlugin extends JavaPlugin {
         reg.registerSystem(new HealingReceivedBonusSystem());
         reg.registerSystem(new HealCritSystem());
 
-        // 7. Register tick-based systems (DelayedSystem)
+        // 7. Register tick-based systems (DelayedEntitySystem)
         reg.registerSystem(new CombatTimeoutSystem(
                 config.resourceRegen().combatTimeoutSeconds()));
         reg.registerSystem(new StatusEffectTickSystem());

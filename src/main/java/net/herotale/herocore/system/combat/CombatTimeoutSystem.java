@@ -1,9 +1,12 @@
 package net.herotale.herocore.system.combat;
 
+import javax.annotation.Nonnull;
+
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.component.system.DelayedSystem;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.tick.DelayedEntitySystem;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import net.herotale.herocore.api.component.CombatStateComponent;
@@ -13,10 +16,12 @@ import net.herotale.herocore.api.event.CombatExitEvent;
  * Ticks combat state for entities, dispatching a {@link CombatExitEvent}
  * when the combat timeout elapses.
  * <p>
- * Extends {@link DelayedSystem} — fires at a configurable interval (default 0.5s),
- * not every tick, to reduce overhead.
+ * Extends {@link DelayedEntitySystem} — fires at a configurable interval (default 0.5s),
+ * not every tick, to reduce overhead. Intentionally slower than
+ * {@link StatusEffectTickSystem}'s 0.25s — combat timeout doesn't need
+ * sub-second precision.
  */
-public class CombatTimeoutSystem extends DelayedSystem<EntityStore> {
+public class CombatTimeoutSystem extends DelayedEntitySystem<EntityStore> {
 
     private final float combatTimeoutSeconds;
 
@@ -29,22 +34,22 @@ public class CombatTimeoutSystem extends DelayedSystem<EntityStore> {
     }
 
     @Override
-    public void delayedTick(float dt, int systemIndex, Store<EntityStore> store) {
-        // Iterate entity chunks matching CombatStateComponent query
-        store.forEachChunk(CombatStateComponent.getComponentType(),
-                (ArchetypeChunk<EntityStore> chunk, CommandBuffer<EntityStore> cmd) -> {
-            for (int i = 0; i < chunk.size(); i++) {
-                CombatStateComponent combat = chunk.getComponent(i, CombatStateComponent.getComponentType());
-                if (combat == null || !combat.isInCombat()) continue;
+    public Query<EntityStore> getQuery() {
+        return CombatStateComponent.getComponentType();
+    }
 
-                combat.tickElapsed(dt);
+    @Override
+    public void tick(float dt, int index, @Nonnull ArchetypeChunk<EntityStore> chunk,
+                     @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> cb) {
+        CombatStateComponent combat = chunk.getComponent(index, CombatStateComponent.getComponentType());
+        if (combat == null || !combat.isInCombat()) return;
 
-                if (combat.getSecondsSinceLastDamage() > combatTimeoutSeconds) {
-                    combat.setInCombat(false);
-                    // Dispatch CombatExitEvent via CommandBuffer
-                    cmd.invoke(chunk.getReferenceTo(i), new CombatExitEvent());
-                }
-            }
-        });
+        combat.tickElapsed(dt);
+
+        if (combat.getSecondsSinceLastDamage() > combatTimeoutSeconds) {
+            combat.setInCombat(false);
+            // Dispatch CombatExitEvent via CommandBuffer
+            cb.invoke(chunk.getReferenceTo(index), new CombatExitEvent());
+        }
     }
 }

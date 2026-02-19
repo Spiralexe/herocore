@@ -1,16 +1,21 @@
 package net.herotale.herocore.impl.system;
 
 import javax.annotation.Nonnull;
+import java.util.Set;
 import java.util.logging.Level;
 
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsSystems;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsModule;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
@@ -72,7 +77,8 @@ import net.herotale.herocore.impl.attribute.AttributeDerivationFormulas;
  * @see AttributeDerivationFormulas
  * @see EntityStatMap
  */
-public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore> {
+public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore>
+        implements EntityStatsSystems.StatModifyingSystem {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
