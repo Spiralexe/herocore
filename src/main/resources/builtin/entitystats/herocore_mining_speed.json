@@ -1,7 +1,0 @@
-{
-  "id": "herocore:mining_speed",
-  "defaultValue": 1.0,
-  "minValue": 0.1,
-  "maxValue": 10.0,
-  "regenerating": false
-}

@@ -1,0 +1,10 @@
+{
+  "InitialValue": 0.0,
+  "Min": 0.0,
+  "Max": 0.8,
+  "Regenerating": [],
+  "ResetType": "InitialValue",
+  "Shared": false,
+  "IgnoreInvulnerability": false,
+  "HideFromTooltip": false
+}

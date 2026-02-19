@@ -1,7 +1,0 @@
-{
-  "id": "herocore:heal_crit_multiplier",
-  "defaultValue": 1.5,
-  "minValue": 1.0,
-  "maxValue": 10.0,
-  "regenerating": false
-}

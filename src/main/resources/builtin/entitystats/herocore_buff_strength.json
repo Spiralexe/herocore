@@ -1,7 +1,0 @@
-{
-  "id": "herocore:buff_strength",
-  "defaultValue": 1.0,
-  "minValue": 0.0,
-  "maxValue": 10.0,
-  "regenerating": false
-}

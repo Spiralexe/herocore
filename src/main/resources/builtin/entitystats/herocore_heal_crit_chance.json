@@ -1,7 +1,0 @@
-{
-  "id": "herocore:heal_crit_chance",
-  "defaultValue": 0.0,
-  "minValue": 0.0,
-  "maxValue": 1.0,
-  "regenerating": false
-}

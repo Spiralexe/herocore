@@ -1,7 +1,0 @@
-{
-  "id": "herocore:crowd_control_duration",
-  "defaultValue": 1.0,
-  "minValue": 0.0,
-  "maxValue": 5.0,
-  "regenerating": false
-}

@@ -1,7 +1,0 @@
-{
-  "id": "herocore:attack_speed",
-  "defaultValue": 1.0,
-  "minValue": 0.1,
-  "maxValue": 5.0,
-  "regenerating": false
-}
