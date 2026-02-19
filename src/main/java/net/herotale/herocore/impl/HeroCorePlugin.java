@@ -12,6 +12,11 @@ import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
 import net.herotale.herocore.api.event.CombatExitEvent;
 import net.herotale.herocore.api.event.LevelUpEvent;
 import net.herotale.herocore.api.heal.HeroCoreHealEvent;
+import net.herotale.herocore.api.leveling.XPSource;
+import net.herotale.herocore.impl.entity.MobRegistryImpl;
+import net.herotale.herocore.impl.harvest.HarvestTierRegistryImpl;
+import net.herotale.herocore.impl.leveling.LevelingRegistryImpl;
+import net.herotale.herocore.impl.zone.ZoneModifierRegistryImpl;
 import net.herotale.herocore.impl.config.CoreConfig;
 import net.herotale.herocore.impl.config.CoreConfigLoader;
 import net.herotale.herocore.impl.system.AttributeDerivationSystem;
@@ -94,8 +99,24 @@ public class HeroCorePlugin extends JavaPlugin {
         // 8. Initialize the public API facade
         HeroCore api = HeroCore.initialize();
 
+        // 9. Instantiate and wire up registries
+        // Convert XP source weights from config (String keys) to enum keys
+        var sourceWeights = new java.util.HashMap<XPSource, Double>();
+        config.leveling().sourceWeights().forEach((key, value) -> {
+            try {
+                sourceWeights.put(XPSource.valueOf(key.toUpperCase()), value);
+            } catch (IllegalArgumentException e) {
+                LOGGER.at(Level.WARNING).log("Unknown XP source in config: " + key);
+            }
+        });
+
+        api.setLevelingRegistry(new LevelingRegistryImpl(sourceWeights));
+        api.setMobRegistry(new MobRegistryImpl());
+        api.setZoneModifierRegistry(new ZoneModifierRegistryImpl());
+        api.setHarvestTierRegistry(new HarvestTierRegistryImpl());
+
         LOGGER.at(Level.INFO).log("HeroCore initialized — damage/heal pipelines, " +
-                "combat timeout, status effects, and AttributeDerivationSystem registered.");
+                "combat timeout, status effects, AttributeDerivationSystem, and all registries ready.");
     }
 
     @Override
