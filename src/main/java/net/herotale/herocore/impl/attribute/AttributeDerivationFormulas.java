@@ -97,10 +97,10 @@ public class AttributeDerivationFormulas {
             derived.put(RPGAttribute.SHIELD_STRENGTH, shieldStrength);
         }
 
-        // Mining Speed = base 1.0 + bonus from STR
+        // Mining Speed bonus = STR * perPoint (base speed comes from stat default)
         double miningSpeedBonus = str / 500.0; // TODO: make configurable
         if (miningSpeedBonus > 0.0) {
-            derived.put(RPGAttribute.MINING_SPEED, 1.0 + miningSpeedBonus);
+            derived.put(RPGAttribute.MINING_SPEED, miningSpeedBonus);
         }
 
         // ── DEXTERITY DERIVATIONS ─────────────────────────────────────
@@ -111,10 +111,10 @@ public class AttributeDerivationFormulas {
             derived.put(RPGAttribute.CRIT_CHANCE, critChance);
         }
 
-        // Attack Speed = base 1.0 + (DEX * perPoint)
+        // Attack Speed bonus = DEX * perPoint (base speed comes from stat default)
         double attackSpeedBonus = dex * attrDerivation.dexterity().attackSpeedPercentPerPoint();
         if (attackSpeedBonus > 0.0) {
-            derived.put(RPGAttribute.ATTACK_SPEED, 1.0 + attackSpeedBonus);
+            derived.put(RPGAttribute.ATTACK_SPEED, attackSpeedBonus);
         }
 
         // Dodge Rating = DEX * perPoint
@@ -132,10 +132,10 @@ public class AttributeDerivationFormulas {
             derived.put(RPGAttribute.FALL_DAMAGE_REDUCTION, fallDmgReduction);
         }
 
-        // Move Speed = base 1.0 + bonus
+        // Move Speed bonus = DEX * perPoint (base speed comes from stat default)
         double moveSpeedBonus = dex / 500.0; // TODO: make configurable
         if (moveSpeedBonus > 0.0) {
-            derived.put(RPGAttribute.MOVE_SPEED, 1.0 + moveSpeedBonus);
+            derived.put(RPGAttribute.MOVE_SPEED, moveSpeedBonus);
         }
 
         // Projectile Resistance (flat) = DEX * perPoint
@@ -175,10 +175,10 @@ public class AttributeDerivationFormulas {
             derived.put(RPGAttribute.SPELL_CRIT_CHANCE, spellCritChance);
         }
 
-        // Spell Crit Multiplier = base 1.5 + (INT * perPoint)
+        // Spell Crit Multiplier bonus = INT * perPoint (base multiplier comes from stat default)
         double spellCritMultBonus = intel * attrDerivation.intelligence().spellCritMultiplierPerPoint();
         if (spellCritMultBonus > 0.0) {
-            derived.put(RPGAttribute.SPELL_CRIT_MULTIPLIER, 1.5 + spellCritMultBonus);
+            derived.put(RPGAttribute.SPELL_CRIT_MULTIPLIER, spellCritMultBonus);
         }
 
         // Magic Resist = INT * perPoint
