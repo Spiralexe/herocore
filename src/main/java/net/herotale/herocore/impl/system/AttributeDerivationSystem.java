@@ -17,8 +17,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsSystems;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatsModule;
-import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
-import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 
 import net.herotale.herocore.api.attribute.RPGAttribute;
@@ -390,7 +388,7 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore>
     }
 
     /**
-     * Helper: adds or updates a StaticModifier in EntityStatMap.
+     * Helper: sets a derived stat value directly in EntityStatMap.
      * 
      * @param entityStatMap the entity's stat map
      * @param modifierName  unique name (e.g., "physical_defense_flat") for removal/update
@@ -406,27 +404,9 @@ public class AttributeDerivationSystem extends EntityTickingSystem<EntityStore>
         }
 
         if (Math.abs(value) < 1e-10) {
-            entityStatMap.removeModifier(statTypeIndex, modifierKey);
+            entityStatMap.resetStatValue(EntityStatMap.Predictable.SELF, statTypeIndex);
             return;
         }
-
-        StaticModifier modifier = createStaticModifier((float) value, isPercent);
-        entityStatMap.putModifier(statTypeIndex, modifierKey, modifier);
-    }
-
-    /**
-     * Creates a StaticModifier with the given value and type.
-     * 
-     * @param value the numeric value of the modifier
-     * @param isPercent true if this is a percentage/multiplicative modifier, false for additive
-     * @return a new StaticModifier configured for EntityStatMap
-     */
-    private StaticModifier createStaticModifier(float value, boolean isPercent) {
-        // All derived modifiers use ADDITIVE stacking — even speed modifiers.
-        // Speed stats have a base of 1.0; the derived formula outputs the bonus
-        // (e.g. 0.2 for +20% speed). ADDITIVE adds to the base directly.
-        // MULTIPLICATIVE would compound with other modifiers incorrectly.
-        return new StaticModifier(Modifier.ModifierTarget.MAX,
-                StaticModifier.CalculationType.ADDITIVE, value);
+        entityStatMap.setStatValue(EntityStatMap.Predictable.SELF, statTypeIndex, (float) value);
     }
 }
