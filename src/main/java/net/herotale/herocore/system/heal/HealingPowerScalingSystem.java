@@ -37,7 +37,7 @@ public class HealingPowerScalingSystem extends EntityEventSystem<EntityStore, He
         if (event.isCancelled()) return;
         if (event.getHealer() == null) return;
 
-        int hpIndex = HeroCoreStatTypes.getIndex("herocore:healing_power");
+        int hpIndex = HeroCoreStatTypes.getIndex("HeroCoreHealingPower");
         if (hpIndex < 0) return;
 
         float healingPower = HeroCoreStatTypes.getStatValue(event.getHealer(), hpIndex);

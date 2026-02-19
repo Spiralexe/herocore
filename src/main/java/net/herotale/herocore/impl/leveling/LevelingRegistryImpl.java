@@ -64,7 +64,7 @@ public class LevelingRegistryImpl implements LevelingRegistry {
         amount *= sourceWeight;
 
         // Apply XP_GAIN_MULTIPLIER from EntityStatMap if available
-        int xpMultIndex = HeroCoreStatTypes.getIndex("herocore:xp_gain_multiplier");
+        int xpMultIndex = HeroCoreStatTypes.getIndex("HeroCoreXpGainMultiplier");
         if (xpMultIndex >= 0) {
             float xpMult = HeroCoreStatTypes.getStatValue(entityRef, xpMultIndex);
             if (xpMult > 0) {

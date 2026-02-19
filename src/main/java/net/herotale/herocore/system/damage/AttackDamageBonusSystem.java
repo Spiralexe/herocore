@@ -37,7 +37,7 @@ public class AttackDamageBonusSystem extends EntityEventSystem<EntityStore, Hero
         if (event.getAttacker() == null) return;
 
         // Read ATTACK_DAMAGE from the attacker's EntityStatMap
-        int statIndex = HeroCoreStatTypes.getIndex("herocore:attack_damage");
+        int statIndex = HeroCoreStatTypes.getIndex("HeroCoreAttackDamage");
         if (statIndex < 0) return;
 
         float attackDamage = HeroCoreStatTypes.getStatValue(event.getAttacker(), statIndex);

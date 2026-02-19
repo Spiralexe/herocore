@@ -47,7 +47,7 @@ public class HealingReceivedBonusSystem extends EntityEventSystem<EntityStore, H
         // The target of the heal is the entity that owns this event (chunk entity)
         Ref<EntityStore> targetRef = chunk.getReferenceTo(index);
 
-        int bonusIndex = HeroCoreStatTypes.getIndex("herocore:healing_received_bonus");
+        int bonusIndex = HeroCoreStatTypes.getIndex("HeroCoreHealingReceivedBonus");
         if (bonusIndex < 0) return;
 
         float bonus = HeroCoreStatTypes.getStatValue(targetRef, bonusIndex);

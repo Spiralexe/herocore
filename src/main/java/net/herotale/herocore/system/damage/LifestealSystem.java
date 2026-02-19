@@ -47,7 +47,7 @@ public class LifestealSystem extends EntityEventSystem<EntityStore, HeroCoreDama
         if (event.isCancelled()) return;
         if (event.getAttacker() == null) return;
 
-        int lifestealIndex = HeroCoreStatTypes.getIndex("herocore:lifesteal");
+        int lifestealIndex = HeroCoreStatTypes.getIndex("HeroCoreLifesteal");
         if (lifestealIndex < 0) return;
 
         float lifesteal = HeroCoreStatTypes.getStatValue(event.getAttacker(), lifestealIndex);

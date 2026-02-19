@@ -38,24 +38,24 @@ public class ResistanceMitigationSystem extends EntityEventSystem<EntityStore, H
      * Physical is NOT in this map — handled natively.
      */
     private static final Map<DamageType, String> RESIST_STAT_KEYS = Map.ofEntries(
-            Map.entry(DamageType.PROJECTILE, "herocore:projectile_resistance_percent"),
-            Map.entry(DamageType.MAGICAL,    "herocore:magic_resist"),
-            Map.entry(DamageType.FIRE,       "herocore:fire_resistance_percent"),
-            Map.entry(DamageType.ICE,        "herocore:ice_resistance_percent"),
-            Map.entry(DamageType.LIGHTNING,  "herocore:lightning_resistance_percent"),
-            Map.entry(DamageType.POISON,     "herocore:poison_resistance_percent"),
-            Map.entry(DamageType.ARCANE,     "herocore:arcane_resistance_percent")
+            Map.entry(DamageType.PROJECTILE, "HeroCoreProjectileResistancePercent"),
+            Map.entry(DamageType.MAGICAL,    "HeroCoreMagicResist"),
+            Map.entry(DamageType.FIRE,       "HeroCoreFireResistancePercent"),
+            Map.entry(DamageType.ICE,        "HeroCoreIceResistancePercent"),
+            Map.entry(DamageType.LIGHTNING,  "HeroCoreLightningResistancePercent"),
+            Map.entry(DamageType.POISON,     "HeroCorePoisonResistancePercent"),
+            Map.entry(DamageType.ARCANE,     "HeroCoreArcaneResistancePercent")
     );
 
     /**
      * Fallback map: legacy 0–100 scale attributes for backward compatibility.
      */
     private static final Map<DamageType, String> LEGACY_FALLBACK_KEYS = Map.of(
-            DamageType.FIRE,      "herocore:elemental_resist_fire",
-            DamageType.ICE,       "herocore:elemental_resist_ice",
-            DamageType.LIGHTNING, "herocore:elemental_resist_lightning",
-            DamageType.POISON,    "herocore:elemental_resist_poison",
-            DamageType.ARCANE,    "herocore:elemental_resist_arcane"
+            DamageType.FIRE,      "HeroCoreElementalResistFire",
+            DamageType.ICE,       "HeroCoreElementalResistIce",
+            DamageType.LIGHTNING, "HeroCoreElementalResistLightning",
+            DamageType.POISON,    "HeroCoreElementalResistPoison",
+            DamageType.ARCANE,    "HeroCoreElementalResistArcane"
     );
 
     private final float maxResistanceReduction;
@@ -108,7 +108,7 @@ public class ResistanceMitigationSystem extends EntityEventSystem<EntityStore, H
         // Magic penetration
         float magicPen = 0.0f;
         if (event.getAttacker() != null) {
-            int penIndex = HeroCoreStatTypes.getIndex("herocore:magic_penetration");
+            int penIndex = HeroCoreStatTypes.getIndex("HeroCoreMagicPenetration");
             if (penIndex >= 0) {
                 magicPen = HeroCoreStatTypes.getStatValue(event.getAttacker(), penIndex);
             }

@@ -18,13 +18,13 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
  * are then used by gameplay systems for O(1) lookup into EntityStatMap.
  * 
  * Custom stat types defined in HeroCore assets:
- * - herocore:crit_damage_multiplier (CRIT_DAMAGE_MULTIPLIER)
- * - herocore:crit_chance (CRIT_CHANCE)
- * - herocore:attack_damage (ATTACK_DAMAGE)
- * - herocore:spell_power (SPELL_POWER)
- * - herocore:physical_defense (PHYSICAL_DEFENSE)
- * - herocore:physical_defense_percent (PHYSICAL_DEFENSE_PERCENT)
- * - etc. (see builtin/entitystats/ JSON assets)
+ * - HeroCoreCritDamageMultiplier (CRIT_DAMAGE_MULTIPLIER)
+ * - HeroCoreCritChance (CRIT_CHANCE)
+ * - HeroCoreAttackDamage (ATTACK_DAMAGE)
+ * - HeroCoreSpellPower (SPELL_POWER)
+ * - HeroCorePhysicalResistance (PHYSICAL_RESISTANCE)
+ * - HeroCorePhysicalResistancePercent (PHYSICAL_RESISTANCE_PERCENT)
+ * - etc. (see Server/Entity/Stats/ JSON assets)
  */
 public class HeroCoreStatTypes {
 
@@ -101,58 +101,58 @@ public class HeroCoreStatTypes {
         // If a stat is not found, index remains Integer.MIN_VALUE and validate() will catch it
         
         // Crit & Damage
-        CRIT_DAMAGE_MULTIPLIER = assetMap.getIndex("herocore:crit_damage_multiplier");
-        CRIT_CHANCE = assetMap.getIndex("herocore:crit_chance");
-        ATTACK_DAMAGE = assetMap.getIndex("herocore:attack_damage");
-        SPELL_POWER = assetMap.getIndex("herocore:spell_power");
-        SPELL_CRIT_CHANCE = assetMap.getIndex("herocore:spell_crit_chance");
-        SPELL_CRIT_MULTIPLIER = assetMap.getIndex("herocore:spell_crit_multiplier");
-        HEAL_CRIT_CHANCE = assetMap.getIndex("herocore:heal_crit_chance");
-        HEAL_CRIT_MULTIPLIER = assetMap.getIndex("herocore:heal_crit_multiplier");
+        CRIT_DAMAGE_MULTIPLIER = assetMap.getIndex("HeroCoreCritDamageMultiplier");
+        CRIT_CHANCE = assetMap.getIndex("HeroCoreCritChance");
+        ATTACK_DAMAGE = assetMap.getIndex("HeroCoreAttackDamage");
+        SPELL_POWER = assetMap.getIndex("HeroCoreSpellPower");
+        SPELL_CRIT_CHANCE = assetMap.getIndex("HeroCoreSpellCritChance");
+        SPELL_CRIT_MULTIPLIER = assetMap.getIndex("HeroCoreSpellCritMultiplier");
+        HEAL_CRIT_CHANCE = assetMap.getIndex("HeroCoreHealCritChance");
+        HEAL_CRIT_MULTIPLIER = assetMap.getIndex("HeroCoreHealCritMultiplier");
         
         // Defense
-        PHYSICAL_RESISTANCE = assetMap.getIndex("herocore:physical_resistance");
-        PHYSICAL_RESISTANCE_PERCENT = assetMap.getIndex("herocore:physical_resistance_percent");
-        MAGIC_RESIST = assetMap.getIndex("herocore:magic_resist");
-        ARMOR = assetMap.getIndex("herocore:armor");
-        DODGE_RATING = assetMap.getIndex("herocore:dodge_rating");
-        BLOCK_STRENGTH = assetMap.getIndex("herocore:block_strength");
-        SHIELD_STRENGTH = assetMap.getIndex("herocore:shield_strength");
+        PHYSICAL_RESISTANCE = assetMap.getIndex("HeroCorePhysicalResistance");
+        PHYSICAL_RESISTANCE_PERCENT = assetMap.getIndex("HeroCorePhysicalResistancePercent");
+        MAGIC_RESIST = assetMap.getIndex("HeroCoreMagicResist");
+        ARMOR = assetMap.getIndex("HeroCoreArmor");
+        DODGE_RATING = assetMap.getIndex("HeroCoreDodgeRating");
+        BLOCK_STRENGTH = assetMap.getIndex("HeroCoreBlockStrength");
+        SHIELD_STRENGTH = assetMap.getIndex("HeroCoreShieldStrength");
         
         // Elemental Resistance
-        PROJECTILE_RESISTANCE = assetMap.getIndex("herocore:projectile_resistance");
-        PROJECTILE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:projectile_resistance_percent");
-        FIRE_RESISTANCE = assetMap.getIndex("herocore:fire_resistance");
-        FIRE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:fire_resistance_percent");
-        ICE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:ice_resistance_percent");
-        LIGHTNING_RESISTANCE_PERCENT = assetMap.getIndex("herocore:lightning_resistance_percent");
-        POISON_RESISTANCE_PERCENT = assetMap.getIndex("herocore:poison_resistance_percent");
-        ARCANE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:arcane_resistance_percent");
+        PROJECTILE_RESISTANCE = assetMap.getIndex("HeroCoreProjectileResistance");
+        PROJECTILE_RESISTANCE_PERCENT = assetMap.getIndex("HeroCoreProjectileResistancePercent");
+        FIRE_RESISTANCE = assetMap.getIndex("HeroCoreFireResistance");
+        FIRE_RESISTANCE_PERCENT = assetMap.getIndex("HeroCoreFireResistancePercent");
+        ICE_RESISTANCE_PERCENT = assetMap.getIndex("HeroCoreIceResistancePercent");
+        LIGHTNING_RESISTANCE_PERCENT = assetMap.getIndex("HeroCoreLightningResistancePercent");
+        POISON_RESISTANCE_PERCENT = assetMap.getIndex("HeroCorePoisonResistancePercent");
+        ARCANE_RESISTANCE_PERCENT = assetMap.getIndex("HeroCoreArcaneResistancePercent");
         
         // Control / Threat
-        CC_RESISTANCE = assetMap.getIndex("herocore:cc_resistance");
-        DEBUFF_RESISTANCE = assetMap.getIndex("herocore:debuff_resistance");
-        THREAT_GENERATION = assetMap.getIndex("herocore:threat_generation");
+        CC_RESISTANCE = assetMap.getIndex("HeroCoreCcResistance");
+        DEBUFF_RESISTANCE = assetMap.getIndex("HeroCoreDebuffResistance");
+        THREAT_GENERATION = assetMap.getIndex("HeroCoreThreatGeneration");
         
         // Speed
-        ATTACK_SPEED = assetMap.getIndex("herocore:attack_speed");
-        MOVE_SPEED = assetMap.getIndex("herocore:move_speed");
-        MINING_SPEED = assetMap.getIndex("herocore:mining_speed");
+        ATTACK_SPEED = assetMap.getIndex("HeroCoreAttackSpeed");
+        MOVE_SPEED = assetMap.getIndex("HeroCoreMoveSpeed");
+        MINING_SPEED = assetMap.getIndex("HeroCoreMiningSpeed");
         
         // Resources
-        MAX_HEALTH = assetMap.getIndex("herocore:max_health");
-        HEALTH_REGEN = assetMap.getIndex("herocore:health_regen");
-        MAX_MANA = assetMap.getIndex("herocore:max_mana");
-        MANA_REGEN = assetMap.getIndex("herocore:mana_regen");
-        MAX_STAMINA = assetMap.getIndex("herocore:max_stamina");
-        STAMINA_REGEN = assetMap.getIndex("herocore:stamina_regen");
+        MAX_HEALTH = assetMap.getIndex("HeroCoreMaxHealth");
+        HEALTH_REGEN = assetMap.getIndex("HeroCoreHealthRegen");
+        MAX_MANA = assetMap.getIndex("HeroCoreMaxMana");
+        MANA_REGEN = assetMap.getIndex("HeroCoreManaRegen");
+        MAX_STAMINA = assetMap.getIndex("HeroCoreMaxStamina");
+        STAMINA_REGEN = assetMap.getIndex("HeroCoreStaminaRegen");
         
         // Healing
-        HEALING_POWER = assetMap.getIndex("herocore:healing_power");
-        BUFF_STRENGTH = assetMap.getIndex("herocore:buff_strength");
+        HEALING_POWER = assetMap.getIndex("HeroCoreHealingPower");
+        BUFF_STRENGTH = assetMap.getIndex("HeroCoreBuffStrength");
         
         // Misc
-        FALL_DAMAGE_REDUCTION = assetMap.getIndex("herocore:fall_damage_reduction");
+        FALL_DAMAGE_REDUCTION = assetMap.getIndex("HeroCoreFallDamageReduction");
 
         LOGGER.at(Level.FINE).log("HeroCore stat types resolved: " +
                 "crit_dmg=%d, crit=%d, atk=%d, spell_pwr=%d, phys_res=%d, magic=%d, " +
@@ -288,7 +288,7 @@ public class HeroCoreStatTypes {
      * Resolve a stat type index by asset ID at runtime.
      * Returns -1 if the asset map is not loaded or the key is not found.
      *
-     * @param assetId full stat asset ID, e.g. "herocore:attack_damage"
+    * @param assetId full stat asset ID, e.g. "HeroCoreAttackDamage"
      * @return the integer index, or -1 if not found
      */
     public static int getIndex(String assetId) {

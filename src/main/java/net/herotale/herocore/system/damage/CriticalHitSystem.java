@@ -54,12 +54,12 @@ public class CriticalHitSystem extends EntityEventSystem<EntityStore, HeroCoreDa
         if (event.isCancelled()) return;
         if (event.getAttacker() == null) return;
 
-        int critChanceIndex = HeroCoreStatTypes.getIndex("herocore:crit_chance");
+        int critChanceIndex = HeroCoreStatTypes.getIndex("HeroCoreCritChance");
         if (critChanceIndex < 0) return;
 
         float critChance = HeroCoreStatTypes.getStatValue(event.getAttacker(), critChanceIndex);
         if (DamageFormulas.rollCrit(critChance, random.nextFloat())) {
-            int critMultIndex = HeroCoreStatTypes.getIndex("herocore:crit_damage_multiplier");
+            int critMultIndex = HeroCoreStatTypes.getIndex("HeroCoreCritDamageMultiplier");
             float critMultiplier = (critMultIndex >= 0)
                     ? HeroCoreStatTypes.getStatValue(event.getAttacker(), critMultIndex)
                     : 0.0f;

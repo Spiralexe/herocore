@@ -45,7 +45,7 @@ public class FallDamageReductionSystem extends EntityEventSystem<EntityStore, He
         if (event.getDamageType() != DamageType.FALL) return;
 
         // Read FALL_DAMAGE_REDUCTION from the victim (the entity this event is dispatched on)
-        int statIndex = HeroCoreStatTypes.getIndex("herocore:fall_damage_reduction");
+        int statIndex = HeroCoreStatTypes.getIndex("HeroCoreFallDamageReduction");
         if (statIndex < 0) return;
 
         float fallReduction = HeroCoreStatTypes.getStatValue(chunk.getReferenceTo(index), statIndex);

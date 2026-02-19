@@ -60,8 +60,8 @@ public class HealCritSystem extends EntityEventSystem<EntityStore, HeroCoreHealE
                 ? event.getHealer()
                 : chunk.getReferenceTo(index);
 
-        int critChanceIndex = HeroCoreStatTypes.getIndex("herocore:heal_crit_chance");
-        int critMultIndex = HeroCoreStatTypes.getIndex("herocore:heal_crit_multiplier");
+        int critChanceIndex = HeroCoreStatTypes.getIndex("HeroCoreHealCritChance");
+        int critMultIndex = HeroCoreStatTypes.getIndex("HeroCoreHealCritMultiplier");
 
         float critChance = critChanceIndex >= 0 ? HeroCoreStatTypes.getStatValue(statSource, critChanceIndex) : 0f;
         float critMultiplier = critMultIndex >= 0 ? HeroCoreStatTypes.getStatValue(statSource, critMultIndex) : FALLBACK_CRIT_MULTIPLIER;
