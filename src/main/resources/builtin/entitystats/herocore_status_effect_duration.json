@@ -1,0 +1,7 @@
+{
+  "id": "herocore:status_effect_duration",
+  "defaultValue": 1.0,
+  "minValue": 0.0,
+  "maxValue": 5.0,
+  "regenerating": false
+}

@@ -1,0 +1,7 @@
+{
+  "id": "herocore:max_health",
+  "defaultValue": 20.0,
+  "minValue": 1.0,
+  "maxValue": 99999.0,
+  "regenerating": false
+}

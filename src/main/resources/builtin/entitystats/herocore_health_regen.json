@@ -1,0 +1,7 @@
+{
+  "id": "herocore:health_regen",
+  "defaultValue": 0.0,
+  "minValue": 0.0,
+  "maxValue": 999.0,
+  "regenerating": false
+}

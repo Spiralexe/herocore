@@ -1,0 +1,7 @@
+{
+  "id": "herocore:ability_power",
+  "defaultValue": 0.0,
+  "minValue": 0.0,
+  "maxValue": 9999.0,
+  "regenerating": false
+}

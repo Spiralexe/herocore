@@ -1,0 +1,7 @@
+{
+  "id": "herocore:resource_efficiency",
+  "defaultValue": 1.0,
+  "minValue": 0.0,
+  "maxValue": 2.0,
+  "regenerating": false
+}

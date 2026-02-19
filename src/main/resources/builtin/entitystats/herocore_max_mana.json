@@ -1,0 +1,7 @@
+{
+  "id": "herocore:max_mana",
+  "defaultValue": 50.0,
+  "minValue": 0.0,
+  "maxValue": 99999.0,
+  "regenerating": false
+}
