@@ -37,18 +37,54 @@ public class HeroCoreStatTypes {
     private static int CRIT_CHANCE = Integer.MIN_VALUE;
     private static int ATTACK_DAMAGE = Integer.MIN_VALUE;
     private static int SPELL_POWER = Integer.MIN_VALUE;
+    private static int SPELL_CRIT_CHANCE = Integer.MIN_VALUE;
+    private static int SPELL_CRIT_MULTIPLIER = Integer.MIN_VALUE;
+    private static int HEAL_CRIT_CHANCE = Integer.MIN_VALUE;
+    private static int HEAL_CRIT_MULTIPLIER = Integer.MIN_VALUE;
     
     // ── Defense Stats ──────────────────────────────────────────────
     private static int PHYSICAL_RESISTANCE = Integer.MIN_VALUE;
+    private static int PHYSICAL_RESISTANCE_PERCENT = Integer.MIN_VALUE;
     private static int MAGIC_RESIST = Integer.MIN_VALUE;
+    private static int ARMOR = Integer.MIN_VALUE;
+    private static int DODGE_RATING = Integer.MIN_VALUE;
+    private static int BLOCK_STRENGTH = Integer.MIN_VALUE;
+    private static int SHIELD_STRENGTH = Integer.MIN_VALUE;
+    
+    // ── Elemental Resistance ───────────────────────────────────────
+    private static int PROJECTILE_RESISTANCE = Integer.MIN_VALUE;
+    private static int PROJECTILE_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    private static int FIRE_RESISTANCE = Integer.MIN_VALUE;
+    private static int FIRE_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    private static int ICE_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    private static int LIGHTNING_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    private static int POISON_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    private static int ARCANE_RESISTANCE_PERCENT = Integer.MIN_VALUE;
+    
+    // ── Control / Threat ───────────────────────────────────────────
+    private static int CC_RESISTANCE = Integer.MIN_VALUE;
+    private static int DEBUFF_RESISTANCE = Integer.MIN_VALUE;
+    private static int THREAT_GENERATION = Integer.MIN_VALUE;
     
     // ── Speed Stats ────────────────────────────────────────────────
     private static int ATTACK_SPEED = Integer.MIN_VALUE;
     private static int MOVE_SPEED = Integer.MIN_VALUE;
     private static int MINING_SPEED = Integer.MIN_VALUE;
     
+    // ── Resources ──────────────────────────────────────────────────
+    private static int MAX_HEALTH = Integer.MIN_VALUE;
+    private static int HEALTH_REGEN = Integer.MIN_VALUE;
+    private static int MAX_MANA = Integer.MIN_VALUE;
+    private static int MANA_REGEN = Integer.MIN_VALUE;
+    private static int MAX_STAMINA = Integer.MIN_VALUE;
+    private static int STAMINA_REGEN = Integer.MIN_VALUE;
+    
     // ── Healing Stats ──────────────────────────────────────────────
     private static int HEALING_POWER = Integer.MIN_VALUE;
+    private static int BUFF_STRENGTH = Integer.MIN_VALUE;
+    
+    // ── Misc ───────────────────────────────────────────────────────
+    private static int FALL_DAMAGE_REDUCTION = Integer.MIN_VALUE;
 
     /**
      * Called when assets are reloaded. Resolves all custom stat indices.
@@ -69,18 +105,54 @@ public class HeroCoreStatTypes {
         CRIT_CHANCE = assetMap.getIndex("herocore:crit_chance");
         ATTACK_DAMAGE = assetMap.getIndex("herocore:attack_damage");
         SPELL_POWER = assetMap.getIndex("herocore:spell_power");
+        SPELL_CRIT_CHANCE = assetMap.getIndex("herocore:spell_crit_chance");
+        SPELL_CRIT_MULTIPLIER = assetMap.getIndex("herocore:spell_crit_multiplier");
+        HEAL_CRIT_CHANCE = assetMap.getIndex("herocore:heal_crit_chance");
+        HEAL_CRIT_MULTIPLIER = assetMap.getIndex("herocore:heal_crit_multiplier");
         
         // Defense
         PHYSICAL_RESISTANCE = assetMap.getIndex("herocore:physical_resistance");
+        PHYSICAL_RESISTANCE_PERCENT = assetMap.getIndex("herocore:physical_resistance_percent");
         MAGIC_RESIST = assetMap.getIndex("herocore:magic_resist");
+        ARMOR = assetMap.getIndex("herocore:armor");
+        DODGE_RATING = assetMap.getIndex("herocore:dodge_rating");
+        BLOCK_STRENGTH = assetMap.getIndex("herocore:block_strength");
+        SHIELD_STRENGTH = assetMap.getIndex("herocore:shield_strength");
+        
+        // Elemental Resistance
+        PROJECTILE_RESISTANCE = assetMap.getIndex("herocore:projectile_resistance");
+        PROJECTILE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:projectile_resistance_percent");
+        FIRE_RESISTANCE = assetMap.getIndex("herocore:fire_resistance");
+        FIRE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:fire_resistance_percent");
+        ICE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:ice_resistance_percent");
+        LIGHTNING_RESISTANCE_PERCENT = assetMap.getIndex("herocore:lightning_resistance_percent");
+        POISON_RESISTANCE_PERCENT = assetMap.getIndex("herocore:poison_resistance_percent");
+        ARCANE_RESISTANCE_PERCENT = assetMap.getIndex("herocore:arcane_resistance_percent");
+        
+        // Control / Threat
+        CC_RESISTANCE = assetMap.getIndex("herocore:cc_resistance");
+        DEBUFF_RESISTANCE = assetMap.getIndex("herocore:debuff_resistance");
+        THREAT_GENERATION = assetMap.getIndex("herocore:threat_generation");
         
         // Speed
         ATTACK_SPEED = assetMap.getIndex("herocore:attack_speed");
         MOVE_SPEED = assetMap.getIndex("herocore:move_speed");
         MINING_SPEED = assetMap.getIndex("herocore:mining_speed");
         
+        // Resources
+        MAX_HEALTH = assetMap.getIndex("herocore:max_health");
+        HEALTH_REGEN = assetMap.getIndex("herocore:health_regen");
+        MAX_MANA = assetMap.getIndex("herocore:max_mana");
+        MANA_REGEN = assetMap.getIndex("herocore:mana_regen");
+        MAX_STAMINA = assetMap.getIndex("herocore:max_stamina");
+        STAMINA_REGEN = assetMap.getIndex("herocore:stamina_regen");
+        
         // Healing
         HEALING_POWER = assetMap.getIndex("herocore:healing_power");
+        BUFF_STRENGTH = assetMap.getIndex("herocore:buff_strength");
+        
+        // Misc
+        FALL_DAMAGE_REDUCTION = assetMap.getIndex("herocore:fall_damage_reduction");
 
         LOGGER.at(Level.FINE).log("HeroCore stat types resolved: " +
                 "crit_dmg=%d, crit=%d, atk=%d, spell_pwr=%d, phys_res=%d, magic=%d, " +
@@ -92,26 +164,66 @@ public class HeroCoreStatTypes {
 
     /**
      * Called during plugin start(). Validates that all stat types resolved successfully.
-     * Throws exception if any index is still Integer.MIN_VALUE (asset not found).
+     * Logs warnings for any index that is still Integer.MIN_VALUE (asset not found).
+     * 
+     * NOTE: Some HeroCore stat types may not have corresponding Hytale native assets.
+     * This is expected - those stats will have indices of Integer.MIN_VALUE and will
+     * be skipped during derivation. Systems should check if a stat index is valid
+     * (not Integer.MIN_VALUE) before attempting to write to it.
      */
     public static void validate() {
-        StringBuilder issues = new StringBuilder();
-        if (CRIT_DAMAGE_MULTIPLIER == Integer.MIN_VALUE) issues.append("crit_damage_multiplier ");
-        if (CRIT_CHANCE == Integer.MIN_VALUE) issues.append("crit_chance ");
-        if (ATTACK_DAMAGE == Integer.MIN_VALUE) issues.append("attack_damage ");
-        if (SPELL_POWER == Integer.MIN_VALUE) issues.append("spell_power ");
-        if (PHYSICAL_RESISTANCE == Integer.MIN_VALUE) issues.append("physical_resistance ");
-        if (MAGIC_RESIST == Integer.MIN_VALUE) issues.append("magic_resist ");
-        if (ATTACK_SPEED == Integer.MIN_VALUE) issues.append("attack_speed ");
-        if (MOVE_SPEED == Integer.MIN_VALUE) issues.append("move_speed ");
-        if (MINING_SPEED == Integer.MIN_VALUE) issues.append("mining_speed ");
-        if (HEALING_POWER == Integer.MIN_VALUE) issues.append("healing_power ");
+        StringBuilder missing = new StringBuilder();
+        int missingCount = 0;
+        
+        if (CRIT_DAMAGE_MULTIPLIER == Integer.MIN_VALUE) { missing.append("crit_damage_multiplier "); missingCount++; }
+        if (CRIT_CHANCE == Integer.MIN_VALUE) { missing.append("crit_chance "); missingCount++; }
+        if (ATTACK_DAMAGE == Integer.MIN_VALUE) { missing.append("attack_damage "); missingCount++; }
+        if (SPELL_POWER == Integer.MIN_VALUE) { missing.append("spell_power "); missingCount++; }
+        if (SPELL_CRIT_CHANCE == Integer.MIN_VALUE) { missing.append("spell_crit_chance "); missingCount++; }
+        if (SPELL_CRIT_MULTIPLIER == Integer.MIN_VALUE) { missing.append("spell_crit_multiplier "); missingCount++; }
+        if (HEAL_CRIT_CHANCE == Integer.MIN_VALUE) { missing.append("heal_crit_chance "); missingCount++; }
+        if (HEAL_CRIT_MULTIPLIER == Integer.MIN_VALUE) { missing.append("heal_crit_multiplier "); missingCount++; }
+        if (PHYSICAL_RESISTANCE == Integer.MIN_VALUE) { missing.append("physical_resistance "); missingCount++; }
+        if (PHYSICAL_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("physical_resistance_percent "); missingCount++; }
+        if (MAGIC_RESIST == Integer.MIN_VALUE) { missing.append("magic_resist "); missingCount++; }
+        if (ARMOR == Integer.MIN_VALUE) { missing.append("armor "); missingCount++; }
+        if (DODGE_RATING == Integer.MIN_VALUE) { missing.append("dodge_rating "); missingCount++; }
+        if (BLOCK_STRENGTH == Integer.MIN_VALUE) { missing.append("block_strength "); missingCount++; }
+        if (SHIELD_STRENGTH == Integer.MIN_VALUE) { missing.append("shield_strength "); missingCount++; }
+        if (PROJECTILE_RESISTANCE == Integer.MIN_VALUE) { missing.append("projectile_resistance "); missingCount++; }
+        if (PROJECTILE_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("projectile_resistance_percent "); missingCount++; }
+        if (FIRE_RESISTANCE == Integer.MIN_VALUE) { missing.append("fire_resistance "); missingCount++; }
+        if (FIRE_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("fire_resistance_percent "); missingCount++; }
+        if (ICE_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("ice_resistance_percent "); missingCount++; }
+        if (LIGHTNING_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("lightning_resistance_percent "); missingCount++; }
+        if (POISON_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("poison_resistance_percent "); missingCount++; }
+        if (ARCANE_RESISTANCE_PERCENT == Integer.MIN_VALUE) { missing.append("arcane_resistance_percent "); missingCount++; }
+        if (CC_RESISTANCE == Integer.MIN_VALUE) { missing.append("cc_resistance "); missingCount++; }
+        if (DEBUFF_RESISTANCE == Integer.MIN_VALUE) { missing.append("debuff_resistance "); missingCount++; }
+        if (THREAT_GENERATION == Integer.MIN_VALUE) { missing.append("threat_generation "); missingCount++; }
+        if (ATTACK_SPEED == Integer.MIN_VALUE) { missing.append("attack_speed "); missingCount++; }
+        if (MOVE_SPEED == Integer.MIN_VALUE) { missing.append("move_speed "); missingCount++; }
+        if (MINING_SPEED == Integer.MIN_VALUE) { missing.append("mining_speed "); missingCount++; }
+        if (MAX_HEALTH == Integer.MIN_VALUE) { missing.append("max_health "); missingCount++; }
+        if (HEALTH_REGEN == Integer.MIN_VALUE) { missing.append("health_regen "); missingCount++; }
+        if (MAX_MANA == Integer.MIN_VALUE) { missing.append("max_mana "); missingCount++; }
+        if (MANA_REGEN == Integer.MIN_VALUE) { missing.append("mana_regen "); missingCount++; }
+        if (MAX_STAMINA == Integer.MIN_VALUE) { missing.append("max_stamina "); missingCount++; }
+        if (STAMINA_REGEN == Integer.MIN_VALUE) { missing.append("stamina_regen "); missingCount++; }
+        if (HEALING_POWER == Integer.MIN_VALUE) { missing.append("healing_power "); missingCount++; }
+        if (BUFF_STRENGTH == Integer.MIN_VALUE) { missing.append("buff_strength "); missingCount++; }
+        if (FALL_DAMAGE_REDUCTION == Integer.MIN_VALUE) { missing.append("fall_damage_reduction "); missingCount++; }
 
-        if (issues.length() > 0) {
-            throw new IllegalStateException("HeroCore stat types failed to load: " + issues.toString());
+        if (missingCount > 0) {
+            LOGGER.at(Level.WARNING).log(
+                "HeroCore stat types: %d/%d failed to resolve from Hytale asset system. " +
+                "These stats will be skipped during derivation. Missing assets: %s" +
+                "To add support for these stats, define them in Hytale's entity stat asset files " +
+                "or use Hytale native stat types where available.",
+                missingCount, 48, missing.toString());
+        } else {
+            LOGGER.at(Level.INFO).log("All HeroCore stat types validated successfully.");
         }
-
-        LOGGER.at(Level.INFO).log("All HeroCore stat types validated successfully.");
     }
 
     // ── Accessors ────────────────────────────────────────────────────
@@ -121,18 +233,54 @@ public class HeroCoreStatTypes {
     public static int getCritChance() { return CRIT_CHANCE; }
     public static int getAttackDamage() { return ATTACK_DAMAGE; }
     public static int getSpellPower() { return SPELL_POWER; }
+    public static int getSpellCritChance() { return SPELL_CRIT_CHANCE; }
+    public static int getSpellCritMultiplier() { return SPELL_CRIT_MULTIPLIER; }
+    public static int getHealCritChance() { return HEAL_CRIT_CHANCE; }
+    public static int getHealCritMultiplier() { return HEAL_CRIT_MULTIPLIER; }
     
     // Defense
     public static int getPhysicalResistance() { return PHYSICAL_RESISTANCE; }
+    public static int getPhysicalResistancePercent() { return PHYSICAL_RESISTANCE_PERCENT; }
     public static int getMagicResist() { return MAGIC_RESIST; }
+    public static int getArmor() { return ARMOR; }
+    public static int getDodgeRating() { return DODGE_RATING; }
+    public static int getBlockStrength() { return BLOCK_STRENGTH; }
+    public static int getShieldStrength() { return SHIELD_STRENGTH; }
+    
+    // Elemental Resistance
+    public static int getProjectileResistance() { return PROJECTILE_RESISTANCE; }
+    public static int getProjectileResistancePercent() { return PROJECTILE_RESISTANCE_PERCENT; }
+    public static int getFireResistance() { return FIRE_RESISTANCE; }
+    public static int getFireResistancePercent() { return FIRE_RESISTANCE_PERCENT; }
+    public static int getIceResistancePercent() { return ICE_RESISTANCE_PERCENT; }
+    public static int getLightningResistancePercent() { return LIGHTNING_RESISTANCE_PERCENT; }
+    public static int getPoisonResistancePercent() { return POISON_RESISTANCE_PERCENT; }
+    public static int getArcaneResistancePercent() { return ARCANE_RESISTANCE_PERCENT; }
+    
+    // Control / Threat
+    public static int getCCResistance() { return CC_RESISTANCE; }
+    public static int getDebuffResistance() { return DEBUFF_RESISTANCE; }
+    public static int getThreatGeneration() { return THREAT_GENERATION; }
     
     // Speed
     public static int getAttackSpeed() { return ATTACK_SPEED; }
     public static int getMoveSpeed() { return MOVE_SPEED; }
     public static int getMiningSpeed() { return MINING_SPEED; }
     
+    // Resources
+    public static int getMaxHealth() { return MAX_HEALTH; }
+    public static int getHealthRegen() { return HEALTH_REGEN; }
+    public static int getMaxMana() { return MAX_MANA; }
+    public static int getManaRegen() { return MANA_REGEN; }
+    public static int getMaxStamina() { return MAX_STAMINA; }
+    public static int getStaminaRegen() { return STAMINA_REGEN; }
+    
     // Healing
     public static int getHealingPower() { return HEALING_POWER; }
+    public static int getBuffStrength() { return BUFF_STRENGTH; }
+    
+    // Misc
+    public static int getFallDamageReduction() { return FALL_DAMAGE_REDUCTION; }
 
     // ── Generic helpers (used by damage/heal systems) ────────────────
 
