@@ -1,6 +1,9 @@
 package net.herotale.herocore.api;
 
 import net.herotale.herocore.api.entity.MobRegistry;
+import net.herotale.herocore.api.factions.FactionRegistry;
+import net.herotale.herocore.api.factions.FactionRules;
+import net.herotale.herocore.api.factions.api.FactionAPI;
 import net.herotale.herocore.api.harvest.HarvestTierRegistry;
 import net.herotale.herocore.api.leveling.LevelingRegistry;
 import net.herotale.herocore.api.zone.ZoneModifierRegistry;
@@ -31,6 +34,11 @@ public final class HeroCore {
     private MobRegistry mobRegistry;
     private ZoneModifierRegistry zoneModifierRegistry;
     private HarvestTierRegistry harvestTierRegistry;
+
+    // ── Faction API (set by the faction-providing plugin, e.g. Heroes) ──
+    private FactionAPI factionAPI;
+    private FactionRegistry factionRegistry;
+    private FactionRules factionRules;
 
     private HeroCore() {}
 
@@ -86,6 +94,28 @@ public final class HeroCore {
         return harvestTierRegistry;
     }
 
+    // ── Faction accessors ────────────────────────────────────────────
+
+    /**
+     * Faction query API — check player factions, alliance status, interaction rules.
+     * Provided by the faction-implementing plugin (e.g. Heroes).
+     *
+     * @return the FactionAPI, or {@code null} if no faction provider is installed
+     */
+    public FactionAPI getFactionAPI() {
+        return factionAPI;
+    }
+
+    /** Registry of all faction definitions. */
+    public FactionRegistry getFactionRegistry() {
+        return factionRegistry;
+    }
+
+    /** Global faction selection/switching rules. */
+    public FactionRules getFactionRules() {
+        return factionRules;
+    }
+
     // ── Internal wiring (called by HeroCorePlugin) ───────────────────
 
     /** @hidden */
@@ -106,5 +136,20 @@ public final class HeroCore {
     /** @hidden */
     public void setHarvestTierRegistry(HarvestTierRegistry registry) {
         this.harvestTierRegistry = registry;
+    }
+
+    /** @hidden Called by the faction-providing plugin during its setup(). */
+    public void setFactionAPI(FactionAPI api) {
+        this.factionAPI = api;
+    }
+
+    /** @hidden */
+    public void setFactionRegistry(FactionRegistry registry) {
+        this.factionRegistry = registry;
+    }
+
+    /** @hidden */
+    public void setFactionRules(FactionRules rules) {
+        this.factionRules = rules;
     }
 }
