@@ -100,16 +100,16 @@ class AttributeDerivationFormulasTest {
     void moveSpeedDerivedFromDexterity() {
         HeroCoreStatsComponent stats = new HeroCoreStatsComponent(0, 100, 0, 0, 0, 0);
         Map<RPGAttribute, Double> derived = AttributeDerivationFormulas.computeDerived(stats, createTestConfig());
-        // 1.0 + 100/500 = 1.2
-        assertEquals(1.2, derived.get(RPGAttribute.MOVE_SPEED), DELTA);
+        // 100/500 = 0.2 (bonus over base)
+        assertEquals(0.2, derived.get(RPGAttribute.MOVE_SPEED), DELTA);
     }
 
     @Test
     void attackSpeedDerivedFromDexterity() {
         HeroCoreStatsComponent stats = new HeroCoreStatsComponent(0, 100, 0, 0, 0, 0);
         Map<RPGAttribute, Double> derived = AttributeDerivationFormulas.computeDerived(stats, createTestConfig());
-        // 1.0 + 100/300 = 1.333...
-        assertEquals(1.333, derived.get(RPGAttribute.ATTACK_SPEED), DELTA);
+        // 100/300 = 0.333...
+        assertEquals(0.333, derived.get(RPGAttribute.ATTACK_SPEED), DELTA);
     }
 
     @Test
@@ -132,8 +132,8 @@ class AttributeDerivationFormulasTest {
     void miningSpeedDerivedFromStrength() {
         HeroCoreStatsComponent stats = new HeroCoreStatsComponent(100, 0, 0, 0, 0, 0);
         Map<RPGAttribute, Double> derived = AttributeDerivationFormulas.computeDerived(stats, createTestConfig());
-        // 1.0 + 100/500 = 1.2
-        assertEquals(1.2, derived.get(RPGAttribute.MINING_SPEED), DELTA);
+        // 100/500 = 0.2 (bonus over base)
+        assertEquals(0.2, derived.get(RPGAttribute.MINING_SPEED), DELTA);
     }
 
     @Test
