@@ -1,30 +1,21 @@
 package net.herotale.herocore.api.event;
 
-import java.util.UUID;
+import com.hypixel.hytale.component.system.EcsEvent;
 
 /**
- * Fired when a player levels up in any leveling profile.
+ * ECS Event fired when an entity levels up.
+ * <p>
+ * Dispatched via {@code cb.invoke(entityRef, new LevelUpEvent(oldLevel, newLevel))}
+ * through the native ECS event system — not a custom bus.
  */
-public class LevelUpEvent {
+public class LevelUpEvent extends EcsEvent {
 
-    private final UUID player;
-    private final String profileId;
     private final int oldLevel;
     private final int newLevel;
 
-    public LevelUpEvent(UUID player, String profileId, int oldLevel, int newLevel) {
-        this.player = player;
-        this.profileId = profileId;
+    public LevelUpEvent(int oldLevel, int newLevel) {
         this.oldLevel = oldLevel;
         this.newLevel = newLevel;
-    }
-
-    public UUID getPlayer() {
-        return player;
-    }
-
-    public String getProfileId() {
-        return profileId;
     }
 
     public int getOldLevel() {

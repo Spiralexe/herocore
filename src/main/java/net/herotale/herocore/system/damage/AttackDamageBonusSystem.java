@@ -1,30 +1,46 @@
 package net.herotale.herocore.system.damage;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.damage.DamageEvent;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import net.herotale.herocore.api.component.HeroCoreStatsComponent;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.damage.DamageFormulas;
 
 /**
- * Adds base attack-damage scaling from the attacker's {@code ATTACK_DAMAGE} attribute.
- * Runs first among damage systems — no ordering dependencies.
+ * Adds base attack-damage scaling from the attacker's ATTACK_DAMAGE stat.
+ * <p>
+ * Runs first in the damage pipeline — no ordering dependencies.
+ * Reads ATTACK_DAMAGE from the attacker's {@code EntityStatMap} via
+ * {@link HeroCoreStatTypes}.
  */
-@SystemOrder
-public class AttackDamageBonusSystem implements DamageSystem {
+public class AttackDamageBonusSystem extends EntityEventSystem<EntityStore, HeroCoreDamageEvent> {
 
-    private boolean enabled = true;
-
-    @Override public String getId() { return "herocore:attack_damage_bonus"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public AttackDamageBonusSystem() {
+        super(HeroCoreDamageEvent.class);
+    }
 
     @Override
-    public void onDamage(DamageEvent event, StatsComponent attackerStats, StatsComponent victimStats) {
-        if (attackerStats == null) return;
-        double damageBonus = attackerStats.getValue(RPGAttribute.ATTACK_DAMAGE);
-        if (damageBonus > 0) {
-            event.setModifiedAmount(event.getModifiedAmount() * (1.0 + damageBonus));
-        }
+    public Query<EntityStore> getQuery() {
+        return HeroCoreStatsComponent.getComponentType();
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreDamageEvent event) {
+        if (event.isCancelled()) return;
+        if (event.getAttacker() == null) return;
+
+        // Read ATTACK_DAMAGE from the attacker's EntityStatMap
+        int statIndex = HeroCoreStatTypes.getIndex("HeroCoreAttackDamage");
+        if (statIndex < 0) return;
+
+        float attackDamage = HeroCoreStatTypes.getStatValue(event.getAttacker(), statIndex);
+        event.setModifiedAmount(DamageFormulas.applyAttackDamageBonus(event.getModifiedAmount(), attackDamage));
     }
 }

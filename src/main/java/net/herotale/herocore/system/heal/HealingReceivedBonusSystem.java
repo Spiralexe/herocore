@@ -1,28 +1,56 @@
 package net.herotale.herocore.system.heal;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
-import net.herotale.herocore.api.heal.HealEvent;
-import net.herotale.herocore.api.system.HealSystem;
-import net.herotale.herocore.api.system.SystemOrder;
+import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import net.herotale.herocore.api.component.HeroCoreStatsComponent;
+import net.herotale.herocore.api.heal.HeroCoreHealEvent;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
+import net.herotale.herocore.impl.heal.HealFormulas;
+
+import java.util.Set;
 
 /**
- * Applies the target's {@code HEALING_RECEIVED_BONUS} multiplier.
- * Runs after healing-power scaling so the bonus stacks multiplicatively.
+ * Applies the HEALING_RECEIVED_BONUS stat of the target (entity being healed)
+ * to increase (or decrease) incoming healing.
+ * Runs after HealingPowerScalingSystem.
  */
-@SystemOrder(after = "herocore:healing_power_scaling")
-public class HealingReceivedBonusSystem implements HealSystem {
+public class HealingReceivedBonusSystem extends EntityEventSystem<EntityStore, HeroCoreHealEvent> {
 
-    private boolean enabled = true;
-
-    @Override public String getId() { return "herocore:healing_received_bonus"; }
-    @Override public boolean isEnabled() { return enabled; }
-    @Override public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public HealingReceivedBonusSystem() {
+        super(HeroCoreHealEvent.class);
+    }
 
     @Override
-    public void onHeal(HealEvent event, StatsComponent healerStats, StatsComponent targetStats) {
-        if (targetStats == null) return;
-        double bonus = targetStats.getValue(RPGAttribute.HEALING_RECEIVED_BONUS);
-        event.setModifiedAmount(event.getModifiedAmount() * (1.0 + bonus));
+    public Query<EntityStore> getQuery() {
+        return HeroCoreStatsComponent.getComponentType();
+    }
+
+    @Override
+    public Set<Dependency<EntityStore>> getDependencies() {
+        return Set.of(new SystemDependency<>(Order.AFTER, HealingPowerScalingSystem.class));
+    }
+
+    @Override
+    public void handle(int index, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store,
+                       CommandBuffer<EntityStore> cb, HeroCoreHealEvent event) {
+        if (event.isCancelled()) return;
+
+        // The target of the heal is the entity that owns this event (chunk entity)
+        Ref<EntityStore> targetRef = chunk.getReferenceTo(index);
+
+        int bonusIndex = HeroCoreStatTypes.getIndex("HeroCoreHealingReceivedBonus");
+        if (bonusIndex < 0) return;
+
+        float bonus = HeroCoreStatTypes.getStatValue(targetRef, bonusIndex);
+        event.setModifiedAmount(HealFormulas.applyHealingReceivedBonus(event.getModifiedAmount(), bonus));
     }
 }

@@ -36,9 +36,9 @@ public record CoreConfig(
     ) {}
 
     public record ResourceRegenConfig(
-            long tickIntervalMs,
+            float tickIntervalSeconds,
             double outOfCombatBonusMultiplier,
-            long combatTimeoutMs
+            float combatTimeoutSeconds
     ) {}
 
     public record LevelingConfig(
@@ -111,8 +111,8 @@ public record CoreConfig(
      * <p>
      * These values feed into HeroCore's resistance attributes
      * ({@code PHYSICAL_RESISTANCE}, {@code PROJECTILE_RESISTANCE}, etc.)
-     * which are then synced to Hytale's native {@code ArmorDamageReduction} system
-     * via the {@code DefenseBridge}.
+     * which are written directly to {@code EntityStatMap} by
+     * {@code AttributeDerivationSystem} as {@code StaticModifier} entries.
      * <p>
      * The {@code physicalResistancePerLevelPercent} field enables additive
      * defense scaling per player level (e.g. +1% physical resistance per level).

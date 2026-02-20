@@ -1,40 +1,40 @@
 package net.herotale.herocore.impl;
 
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import javax.annotation.Nonnull;
+import java.util.logging.Level;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
 import net.herotale.herocore.api.HeroCore;
-import net.herotale.herocore.api.event.HeroCoreReadyEvent;
-import net.herotale.herocore.api.system.DamageSystem;
-import net.herotale.herocore.api.system.HealSystem;
-import net.herotale.herocore.api.system.HeroCoreSystem;
+import net.herotale.herocore.api.damage.HeroCoreDamageEvent;
+import net.herotale.herocore.api.event.CombatExitEvent;
+import net.herotale.herocore.api.event.LevelUpEvent;
+import net.herotale.herocore.api.heal.HeroCoreHealEvent;
+import net.herotale.herocore.api.leveling.XPSource;
+import net.herotale.herocore.impl.entity.MobRegistryImpl;
+import net.herotale.herocore.impl.harvest.HarvestTierRegistryImpl;
+import net.herotale.herocore.impl.leveling.LevelingRegistryImpl;
+import net.herotale.herocore.impl.zone.ZoneModifierRegistryImpl;
 import net.herotale.herocore.impl.config.CoreConfig;
 import net.herotale.herocore.impl.config.CoreConfigLoader;
+import net.herotale.herocore.impl.system.AttributeDerivationSystem;
+import net.herotale.herocore.impl.system.HeroCoreSetupSystem;
+import net.herotale.herocore.system.combat.CombatTimeoutSystem;
+import net.herotale.herocore.system.combat.StatusEffectTickSystem;
 import net.herotale.herocore.system.damage.*;
 import net.herotale.herocore.system.heal.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Hytale plugin entry point for hero-core.
+ * Hytale plugin entry point for HeroCore.
  * <p>
- * Thin shell — registers default ECS systems and loads configuration.
- * HeroCore is a <b>schema provider</b>, not a controller:
- * <ul>
- *   <li>Defines shared {@code Component} classes (StatsComponent, ResourcePoolComponent, etc.)</li>
- *   <li>Defines shared {@code Event} classes (DamageEvent, HealEvent, etc.)</li>
- *   <li>Provides default {@code System} implementations that can be individually disabled</li>
- * </ul>
+ * <b>Architecture:</b> HeroCore is a <b>schema library and formula provider</b> that extends
+ * Hytale's native ECS and stat systems, not a parallel system alongside them.
  * <p>
- * Each system is an independent event handler
- * ordered via {@link net.herotale.herocore.api.system.SystemOrder @SystemOrder}.
- * The Hytale event bus dispatches events to systems in topological order.
+ * All damage/heal systems are registered as ECS {@code EntityEventSystem} instances
+ * with correct ordering via {@code SystemDependency}. There is no custom event bus
+ * or system orchestrator — Hytale's native system pipeline handles execution order.
  */
 public class HeroCorePlugin extends JavaPlugin {
 
@@ -43,108 +43,102 @@ public class HeroCorePlugin extends JavaPlugin {
 
     private CoreConfig config;
 
-    /** Registered default damage systems — individual event handlers with declared ordering. */
-    private final List<DamageSystem> damageSystems = new ArrayList<>();
-
-    /** Registered default heal systems — individual event handlers with declared ordering. */
-    private final List<HealSystem> healSystems = new ArrayList<>();
-
-    public HeroCorePlugin(@NonNullDecl JavaPluginInit init) {
+    public HeroCorePlugin(@Nonnull JavaPluginInit init) {
         super(init);
         instance = this;
     }
 
     @Override
-    protected void setup() {
-        // 1. Load configuration
+    public java.util.concurrent.CompletableFuture<Void> preLoad() {
         config = CoreConfigLoader.load();
+        return super.preLoad();
+    }
 
-        // 2. Register default damage systems (ordered via @SystemOrder, not priority numbers)
-        registerDamageSystem(new AttackDamageBonusSystem());
-        registerDamageSystem(new FallDamageReductionSystem());
-        registerDamageSystem(new ResistanceMitigationSystem());
-        registerDamageSystem(new CriticalHitSystem(config.damage().critDamageBaseMultiplier()));
-        registerDamageSystem(new LifestealSystem(healEvent -> {
-            // Route lifesteal heals to the entity event bus.
-            // In production: targetEntity.postEvent(healEvent)
-        }));
-        registerDamageSystem(new MinimumDamageSystem(config.damage().minimumDamage()));
+    @Override
+    protected void setup() {
+        var reg = getEntityStoreRegistry();
 
-        // 3. Register default heal systems
-        registerHealSystem(new HealingPowerScalingSystem(config.heal().healingPowerScalesRegenTick()));
-        registerHealSystem(new HealingReceivedBonusSystem());
-        registerHealSystem(new HealCritSystem(true));
+        // 1. Register HeroCore component types (persistent + non-persistent)
+        HeroCoreComponentRegistry.registerComponents(reg);
 
-        // 4. Apply per-system enable/disable from config
-        applySystemConfig(config.systemOverrides());
+        // 2. Register ECS event types
+        reg.registerEntityEventType(HeroCoreDamageEvent.class);
+        reg.registerEntityEventType(HeroCoreHealEvent.class);
+        reg.registerEntityEventType(LevelUpEvent.class);
+        reg.registerEntityEventType(CombatExitEvent.class);
 
-        // 5. Initialize the public API facade
+        // 3. Register HolderSystem — ensures HeroCoreStatsComponent on all entities
+        reg.registerSystem(new HeroCoreSetupSystem());
+
+        // 4. Register AttributeDerivationSystem (tick system: primary → derived stats)
+        reg.registerSystem(new AttributeDerivationSystem());
+
+        // 5. Register damage pipeline (EntityEventSystem instances, ordered via SystemDependency)
+        reg.registerSystem(new AttackDamageBonusSystem());
+        reg.registerSystem(new FallDamageReductionSystem());
+        reg.registerSystem(new ResistanceMitigationSystem(
+                (float) config.damage().maxResistanceReduction()));
+        reg.registerSystem(new CriticalHitSystem(
+                (float) config.damage().critDamageBaseMultiplier()));
+        reg.registerSystem(new LifestealSystem());
+        reg.registerSystem(new MinimumDamageSystem(
+                (float) config.damage().minimumDamage()));
+        reg.registerSystem(new DamageApplicationSystem());
+
+        // 6. Register heal pipeline (EntityEventSystem instances, ordered via SystemDependency)
+        reg.registerSystem(new HealingPowerScalingSystem(
+                config.heal().healingPowerScalesRegenTick()));
+        reg.registerSystem(new HealingReceivedBonusSystem());
+        reg.registerSystem(new HealCritSystem());
+
+        // 7. Register tick-based systems (DelayedEntitySystem)
+        reg.registerSystem(new CombatTimeoutSystem(
+                config.resourceRegen().combatTimeoutSeconds()));
+        reg.registerSystem(new StatusEffectTickSystem());
+
+        // 8. Initialize the public API facade
         HeroCore api = HeroCore.initialize();
-        api.setSystemLookup(this::getSystem);
-        api.setDamageSystemsSupplier(this::getDamageSystems);
-        api.setHealSystemsSupplier(this::getHealSystems);
 
-        // 6. Fire HeroCoreReadyEvent so downstream plugins know the API is live
-        api.getEventBus().fire(new HeroCoreReadyEvent(api));
+        // 9. Instantiate and wire up registries
+        // Convert XP source weights from config (String keys) to enum keys
+        var sourceWeights = new java.util.HashMap<XPSource, Double>();
+        config.leveling().sourceWeights().forEach((key, value) -> {
+            try {
+                sourceWeights.put(XPSource.valueOf(key.toUpperCase()), value);
+            } catch (IllegalArgumentException e) {
+                LOGGER.at(Level.WARNING).log("Unknown XP source in config: " + key);
+            }
+        });
 
-        LOGGER.atInfo().log("HeroCore enabled — %d damage systems, %d heal systems.",
-                damageSystems.size(), healSystems.size());
+        api.setLevelingRegistry(new LevelingRegistryImpl(sourceWeights));
+        api.setMobRegistry(new MobRegistryImpl());
+        api.setZoneModifierRegistry(new ZoneModifierRegistryImpl());
+        api.setHarvestTierRegistry(new HarvestTierRegistryImpl());
+
+        LOGGER.at(Level.INFO).log("HeroCore initialized — damage/heal pipelines, " +
+                "combat timeout, status effects, AttributeDerivationSystem, and all registries ready.");
     }
 
+    @Override
+    protected void start() {
+        // Resolve and validate stat type indices after assets are loaded
+        try {
+            HeroCoreStatTypes.update();
+            HeroCoreStatTypes.validate();
+            LOGGER.at(Level.INFO).log("HeroCore stat types resolved and validated successfully.");
+        } catch (Exception e) {
+            LOGGER.at(Level.SEVERE).withCause(e).log("HeroCore stat type validation failed. " +
+                    "Some derived attributes may not function.");
+        }
+    }
+
+    @Override
     protected void shutdown() {
-        LOGGER.atInfo().log("HeroCore disabled cleanly.");
-    }
-
-    // ── System registration ──────────────────────────────────────────
-
-    /**
-     * Register a damage system. Each system is an independent event handler;
-     * execution order is declared via {@code @SystemOrder}, not orchestrated by a central dispatcher.
-     */
-    public void registerDamageSystem(DamageSystem system) {
-        damageSystems.add(system);
-    }
-
-    /**
-     * Register a heal system.
-     */
-    public void registerHealSystem(HealSystem system) {
-        healSystems.add(system);
+        LOGGER.at(Level.INFO).log("HeroCore shutting down cleanly.");
     }
 
     // ── Accessors ────────────────────────────────────────────────────
 
     public static HeroCorePlugin get() { return instance; }
     public CoreConfig getConfig() { return config; }
-
-    /** All registered damage systems (unmodifiable). */
-    public List<DamageSystem> getDamageSystems() { return Collections.unmodifiableList(damageSystems); }
-
-    /** All registered heal systems (unmodifiable). */
-    public List<HealSystem> getHealSystems() { return Collections.unmodifiableList(healSystems); }
-
-    /**
-     * Look up any registered system by ID (damage or heal).
-     * Returns {@code null} if not found.
-     */
-    public HeroCoreSystem getSystem(String systemId) {
-        for (DamageSystem s : damageSystems) { if (s.getId().equals(systemId)) return s; }
-        for (HealSystem s : healSystems)     { if (s.getId().equals(systemId)) return s; }
-        return null;
-    }
-
-    // ── Internals ────────────────────────────────────────────────────
-
-    private void applySystemConfig(Map<String, Boolean> overrides) {
-        if (overrides == null || overrides.isEmpty()) return;
-        for (Map.Entry<String, Boolean> entry : overrides.entrySet()) {
-            HeroCoreSystem system = getSystem(entry.getKey());
-            if (system != null) {
-                system.setEnabled(entry.getValue());
-                if (!entry.getValue()) {
-                    LOGGER.atInfo().log("System '%s' disabled by configuration.", entry.getKey());
-                }
-            }
-        }
-    }
 }

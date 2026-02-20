@@ -1,52 +1,43 @@
 package net.herotale.herocore.impl.leveling;
 
-import net.herotale.herocore.api.attribute.RPGAttribute;
-import net.herotale.herocore.api.component.StatsComponent;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+import net.herotale.herocore.api.component.HeroCoreProgressionComponent;
 import net.herotale.herocore.api.event.LevelDownEvent;
 import net.herotale.herocore.api.event.LevelUpEvent;
 import net.herotale.herocore.api.leveling.*;
+import net.herotale.herocore.impl.HeroCoreStatTypes;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Implementation of the {@link LevelingRegistry}.
- * Manages named leveling profiles and per-player XP/level data.
+ * Manages named leveling profiles and per-entity XP/level data.
  * <p>
- * Events are emitted via injected consumers rather than a global event bus.
+ * Uses {@code Ref<EntityStore>} for all runtime operations — no UUID in the API.
+ * Level/XP data is read from and written to {@link HeroCoreProgressionComponent}
+ * on the entity. Level events are dispatched via {@code CommandBuffer.invoke()},
+ * flowing through the native ECS event system.
  */
 public class LevelingRegistryImpl implements LevelingRegistry {
 
     private final Map<String, LevelingProfile> profiles = new ConcurrentHashMap<>();
-    private final Map<String, Map<UUID, PlayerLevelData>> playerData = new ConcurrentHashMap<>();
-    private final Function<UUID, StatsComponent> statsProvider;
     private final Map<XPSource, Double> sourceWeights;
-    private final Consumer<LevelUpEvent> levelUpSink;
-    private final Consumer<LevelDownEvent> levelDownSink;
 
     /**
-     * @param statsProvider  resolves per-entity StatsComponent
-     * @param sourceWeights  XP source weights
-     * @param levelUpSink    receives level-up events
-     * @param levelDownSink  receives level-down events
+     * @param sourceWeights XP source weights (multipliers per source type)
      */
-    public LevelingRegistryImpl(Function<UUID, StatsComponent> statsProvider,
-                                Map<XPSource, Double> sourceWeights,
-                                Consumer<LevelUpEvent> levelUpSink,
-                                Consumer<LevelDownEvent> levelDownSink) {
-        this.statsProvider = statsProvider;
+    public LevelingRegistryImpl(Map<XPSource, Double> sourceWeights) {
         this.sourceWeights = sourceWeights;
-        this.levelUpSink = levelUpSink;
-        this.levelDownSink = levelDownSink;
     }
 
     @Override
     public void register(LevelingProfile profile) {
         profiles.put(profile.getId(), profile);
-        playerData.putIfAbsent(profile.getId(), new ConcurrentHashMap<>());
     }
 
     @Override
@@ -60,7 +51,9 @@ public class LevelingRegistryImpl implements LevelingRegistry {
     }
 
     @Override
-    public void grantXP(UUID playerUuid, String profileId, double amount, XPSource source) {
+    public void grantXP(Ref<EntityStore> entityRef, Store<EntityStore> store,
+                         CommandBuffer<EntityStore> cb, String profileId,
+                         double amount, XPSource source) {
         LevelingProfile profile = profiles.get(profileId);
         if (profile == null) {
             throw new IllegalArgumentException("Unknown leveling profile: " + profileId);
@@ -70,70 +63,88 @@ public class LevelingRegistryImpl implements LevelingRegistry {
         double sourceWeight = sourceWeights.getOrDefault(source, 1.0);
         amount *= sourceWeight;
 
-        // Apply XP_GAIN_MULTIPLIER attribute
-        StatsComponent stats = statsProvider.apply(playerUuid);
-        double xpMultiplier = stats.getValue(RPGAttribute.XP_GAIN_MULTIPLIER);
-        amount *= (1.0 + xpMultiplier);
+        // Apply XP_GAIN_MULTIPLIER from EntityStatMap if available
+        int xpMultIndex = HeroCoreStatTypes.getIndex("HeroCoreXpGainMultiplier");
+        if (xpMultIndex >= 0) {
+            float xpMult = HeroCoreStatTypes.getStatValue(entityRef, xpMultIndex);
+            if (xpMult > 0) {
+                amount *= xpMult;
+            }
+        }
 
-        PlayerLevelData data = getOrCreateData(profileId, playerUuid);
-        int oldLevel = data.level;
-        data.xp += Math.round(amount);
+        // Read current progression from the entity's component
+        HeroCoreProgressionComponent progression = store.getComponent(
+                entityRef, HeroCoreProgressionComponent.getComponentType());
+        if (progression == null) return;
+
+        int oldLevel = progression.getLevel();
+        long currentXp = (long) progression.getCurrentXP();
+        currentXp += Math.round(amount);
 
         // Clamp XP to max
         long maxXp = profile.getXpCurve().getThreshold(profile.getMaxLevel());
         if (maxXp > 0) {
-            data.xp = Math.min(data.xp, maxXp);
+            currentXp = Math.min(currentXp, maxXp);
         }
 
         // Recalculate level
-        int newLevel = profile.getXpCurve().getLevel(data.xp);
+        int newLevel = profile.getXpCurve().getLevel(currentXp);
         newLevel = Math.min(newLevel, profile.getMaxLevel());
-        data.level = newLevel;
 
-        // Fire level change events
+        // Write back to the entity's component
+        progression.setCurrentXP((float) currentXp);
+        progression.setLevel(newLevel);
+
+        // Calculate XP to next level
+        if (newLevel < profile.getMaxLevel()) {
+            long nextThreshold = profile.getXpCurve().getThreshold(newLevel + 1);
+            progression.setXpToNextLevel((float) (nextThreshold - currentXp));
+        } else {
+            progression.setXpToNextLevel(0f);
+        }
+
+        // Fire level change events via CommandBuffer — flows through ECS event system
         if (newLevel > oldLevel) {
-            levelUpSink.accept(new LevelUpEvent(playerUuid, profileId, oldLevel, newLevel));
+            cb.invoke(entityRef, new LevelUpEvent(oldLevel, newLevel));
         } else if (newLevel < oldLevel) {
-            levelDownSink.accept(new LevelDownEvent(playerUuid, profileId, oldLevel, newLevel));
+            cb.invoke(entityRef, new LevelDownEvent(oldLevel, newLevel));
         }
     }
 
     @Override
-    public int getLevel(UUID playerUuid, String profileId) {
-        PlayerLevelData data = getData(profileId, playerUuid);
-        return data != null ? data.level : 1;
+    public int getLevel(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId) {
+        HeroCoreProgressionComponent progression = store.getComponent(
+                entityRef, HeroCoreProgressionComponent.getComponentType());
+        return progression != null ? progression.getLevel() : 1;
     }
 
     @Override
-    public long getXP(UUID playerUuid, String profileId) {
-        PlayerLevelData data = getData(profileId, playerUuid);
-        return data != null ? data.xp : 0;
+    public long getXP(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId) {
+        HeroCoreProgressionComponent progression = store.getComponent(
+                entityRef, HeroCoreProgressionComponent.getComponentType());
+        return progression != null ? (long) progression.getCurrentXP() : 0;
     }
 
     @Override
-    public void setXP(UUID playerUuid, String profileId, long xp) {
+    public void setXP(Ref<EntityStore> entityRef, Store<EntityStore> store, String profileId, long xp) {
         LevelingProfile profile = profiles.get(profileId);
         if (profile == null) {
             throw new IllegalArgumentException("Unknown leveling profile: " + profileId);
         }
 
-        PlayerLevelData data = getOrCreateData(profileId, playerUuid);
-        data.xp = xp;
-        data.level = Math.min(profile.getXpCurve().getLevel(xp), profile.getMaxLevel());
-    }
+        HeroCoreProgressionComponent progression = store.getComponent(
+                entityRef, HeroCoreProgressionComponent.getComponentType());
+        if (progression == null) return;
 
-    private PlayerLevelData getOrCreateData(String profileId, UUID playerUuid) {
-        return playerData.computeIfAbsent(profileId, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(playerUuid, k -> new PlayerLevelData());
-    }
+        progression.setCurrentXP((float) xp);
+        int newLevel = Math.min(profile.getXpCurve().getLevel(xp), profile.getMaxLevel());
+        progression.setLevel(newLevel);
 
-    private PlayerLevelData getData(String profileId, UUID playerUuid) {
-        Map<UUID, PlayerLevelData> profileMap = playerData.get(profileId);
-        return profileMap != null ? profileMap.get(playerUuid) : null;
-    }
-
-    private static class PlayerLevelData {
-        long xp = 0;
-        int level = 1;
+        if (newLevel < profile.getMaxLevel()) {
+            long nextThreshold = profile.getXpCurve().getThreshold(newLevel + 1);
+            progression.setXpToNextLevel((float) (nextThreshold - xp));
+        } else {
+            progression.setXpToNextLevel(0f);
+        }
     }
 }
