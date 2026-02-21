@@ -19,6 +19,8 @@ import net.herotale.herocore.impl.leveling.LevelingRegistryImpl;
 import net.herotale.herocore.impl.zone.ZoneModifierRegistryImpl;
 import net.herotale.herocore.impl.config.CoreConfig;
 import net.herotale.herocore.impl.config.CoreConfigLoader;
+import net.herotale.herocore.impl.language.*;
+import net.herotale.herocore.api.language.*;
 import net.herotale.herocore.impl.system.AttributeDerivationSystem;
 import net.herotale.herocore.impl.system.HeroCoreSetupSystem;
 import net.herotale.herocore.system.combat.CombatTimeoutSystem;
@@ -42,6 +44,9 @@ public class HeroCorePlugin extends JavaPlugin {
     private static HeroCorePlugin instance;
 
     private CoreConfig config;
+    private LanguageService languageService;
+    private TrainingRegistry trainingRegistry;
+    private HerochatLanguageHook herochatHook;
 
     public HeroCorePlugin(@Nonnull JavaPluginInit init) {
         super(init);
@@ -115,8 +120,28 @@ public class HeroCorePlugin extends JavaPlugin {
         api.setZoneModifierRegistry(new ZoneModifierRegistryImpl());
         api.setHarvestTierRegistry(new HarvestTierRegistryImpl());
 
+        // 10. Initialize language system
+        java.nio.file.Path heroCorePath = getDataDirectory();
+        LanguagePersistenceLayer persistence = new JsonLanguagePersistence(heroCorePath);
+        this.languageService = new LanguageServiceImpl(persistence);
+        this.trainingRegistry = new TrainingRegistryImpl(languageService);
+        this.herochatHook = new HerochatLanguageHookImpl(languageService);
+        
+        // Load default languages
+        LanguageConfigLoader configLoader = new LanguageConfigLoader();
+        java.nio.file.Path languageConfigPath = heroCorePath.resolve("languages.json");
+        for (LanguageDefinition langDef : configLoader.loadFromFile(languageConfigPath)) {
+            languageService.registerLanguage(langDef);
+        }
+        
+        // Load persisted player profiles
+        languageService.loadAll();
+        
+        api.setLanguageService(languageService);
+        api.setTrainingRegistry(trainingRegistry);
+
         LOGGER.at(Level.INFO).log("HeroCore initialized — damage/heal pipelines, " +
-                "combat timeout, status effects, AttributeDerivationSystem, and all registries ready.");
+                "combat timeout, status effects, AttributeDerivationSystem, language system, and all registries ready.");
     }
 
     @Override
@@ -134,6 +159,10 @@ public class HeroCorePlugin extends JavaPlugin {
 
     @Override
     protected void shutdown() {
+        // Save all language data before shutdown
+        if (languageService != null) {
+            languageService.saveAll();
+        }
         LOGGER.at(Level.INFO).log("HeroCore shutting down cleanly.");
     }
 
@@ -141,4 +170,7 @@ public class HeroCorePlugin extends JavaPlugin {
 
     public static HeroCorePlugin get() { return instance; }
     public CoreConfig getConfig() { return config; }
+    public LanguageService getLanguageService() { return languageService; }
+    public TrainingRegistry getTrainingRegistry() { return trainingRegistry; }
+    public HerochatLanguageHook getHerochatLanguageHook() { return herochatHook; }
 }

@@ -1,0 +1,84 @@
+{
+  "languages": [
+    {
+      "id": "imperium_common",
+      "displayName": "Imperial Common",
+      "factionId": "Imperium",
+      "maxProficiency": 200,
+      "distortion": {
+        "phonemeSet": "aeioustr",
+        "syllablePool": [
+          "im", "pe", "ri", "um", "va", "lor", "do", "mi", "nus",
+          "tem", "pus", "reg", "nox", "sol", "lux", "rex", "res",
+          "ver", "tar", "lex", "mos", "net", "aur", "ter", "pos"
+        ],
+        "noiseWords": [
+          "valoren", "imperis", "doraxen", "templen", "rexion",
+          "luxera", "dominus", "solaris", "noctis", "regalis",
+          "tempora", "verius", "saltor", "minara", "tertis",
+          "aureon", "tessera", "mortem", "nexus", "rossum"
+        ]
+      }
+    },
+    {
+      "id": "dominion_common",
+      "displayName": "Dominion Tongue",
+      "factionId": "Dominion",
+      "maxProficiency": 200,
+      "distortion": {
+        "phonemeSet": "krgbhwth",
+        "syllablePool": [
+          "kek", "wrah", "buah", "grok", "krash", "thuk", "wrog",
+          "brah", "grul", "thrax", "wuk", "krul", "grax", "brok",
+          "thrak", "wuk", "brakk", "grum", "thruk", "krol", "wakh"
+        ],
+        "noiseWords": [
+          "kroglak", "wrahbuk", "buargok", "thrakur", "gromlas",
+          "wukleth", "braxgul", "kronum", "thukkah", "graxxul",
+          "brogrim", "kraweth", "thraxgul", "wugrakh", "bralkor",
+          "grommak", "thrakum", "wuggrok", "brokath", "kraxul"
+        ]
+      }
+    },
+    {
+      "id": "elf_tongue",
+      "displayName": "Elven",
+      "raceId": "Elf",
+      "maxProficiency": 200,
+      "distortion": {
+        "phonemeSet": "aeiouyn",
+        "syllablePool": [
+          "ae", "ir", "on", "yn", "ael", "syn", "tir", "nes",
+          "lor", "min", "eth", "vel", "gal", "ath", "wen",
+          "iel", "est", "ren", "tel", "sil", "oth", "eur", "yth"
+        ],
+        "noiseWords": [
+          "aelynthir", "synnesthor", "lorianthel", "minethgal",
+          "athwendorn", "elaynthir", "velsynthon", "galenthor",
+          "nesierthel", "tiraelthen", "wynasthor", "etherelyn",
+          "alanthir", "sylethron", "mirendel", "thalawen", "estylon"
+        ]
+      }
+    },
+    {
+      "id": "orcish",
+      "displayName": "Orcish",
+      "raceId": "Orc",
+      "maxProficiency": 200,
+      "distortion": {
+        "phonemeSet": "grkhbrw",
+        "syllablePool": [
+          "gor", "mak", "dug", "ugh", "lok", "rek", "gruk",
+          "mog", "brek", "grok", "tuk", "wak", "drak", "buk",
+          "throg", "wug", "kruk", "muk", "gash", "bol", "kruk"
+        ],
+        "noiseWords": [
+          "gormagok", "dugbreka", "ughloktuk", "rekmogwar",
+          "graktuh", "moglukdrag", "brekowak", "ukkardom",
+          "dogthruk", "makgrosh", "tugmolar", "brakogum",
+          "lokdegrim", "wargokdul", "mukthrog", "grommok", "thrugak"
+        ]
+      }
+    }
+  ]
+}

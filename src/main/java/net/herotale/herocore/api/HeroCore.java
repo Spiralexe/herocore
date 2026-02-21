@@ -7,6 +7,8 @@ import net.herotale.herocore.api.factions.api.FactionAPI;
 import net.herotale.herocore.api.harvest.HarvestTierRegistry;
 import net.herotale.herocore.api.leveling.LevelingRegistry;
 import net.herotale.herocore.api.zone.ZoneModifierRegistry;
+import net.herotale.herocore.api.language.LanguageService;
+import net.herotale.herocore.api.language.TrainingRegistry;
 
 /**
  * Public API facade for HeroCore.
@@ -34,6 +36,8 @@ public final class HeroCore {
     private MobRegistry mobRegistry;
     private ZoneModifierRegistry zoneModifierRegistry;
     private HarvestTierRegistry harvestTierRegistry;
+    private LanguageService languageService;
+    private TrainingRegistry trainingRegistry;
 
     // ── Faction API (set by the faction-providing plugin, e.g. Heroes) ──
     private FactionAPI factionAPI;
@@ -94,6 +98,16 @@ public final class HeroCore {
         return harvestTierRegistry;
     }
 
+    /** Language system for faction/race languages and proficiency. */
+    public LanguageService getLanguageService() {
+        return languageService;
+    }
+
+    /** Training registry for language proficiency advancement. */
+    public TrainingRegistry getTrainingRegistry() {
+        return trainingRegistry;
+    }
+
     // ── Faction accessors ────────────────────────────────────────────
 
     /**
@@ -136,6 +150,16 @@ public final class HeroCore {
     /** @hidden */
     public void setHarvestTierRegistry(HarvestTierRegistry registry) {
         this.harvestTierRegistry = registry;
+    }
+
+    /** @hidden */
+    public void setLanguageService(LanguageService service) {
+        this.languageService = service;
+    }
+
+    /** @hidden */
+    public void setTrainingRegistry(TrainingRegistry registry) {
+        this.trainingRegistry = registry;
     }
 
     /** @hidden Called by the faction-providing plugin during its setup(). */
