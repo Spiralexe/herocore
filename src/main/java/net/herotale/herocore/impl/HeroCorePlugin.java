@@ -121,7 +121,8 @@ public class HeroCorePlugin extends JavaPlugin {
         api.setHarvestTierRegistry(new HarvestTierRegistryImpl());
 
         // 10. Initialize language system
-        java.nio.file.Path heroCorePath = getDataDirectory();
+        // Use consistent directory structure: mods/herocore (same as config.json)
+        java.nio.file.Path heroCorePath = java.nio.file.Path.of("mods", "herocore");
         LanguagePersistenceLayer persistence = new JsonLanguagePersistence(heroCorePath);
         this.languageService = new LanguageServiceImpl(persistence);
         this.trainingRegistry = new TrainingRegistryImpl(languageService);
