@@ -770,6 +770,69 @@ Optional<MobProfile> profile = mobs.getProfile("skeleton_warrior");
 
 ---
 
+### Faction API
+
+HeroCore exposes a lightweight Faction API for downstream plugins to manage factions, membership, roles, and relations. It's intended to be a small, safe facade that stores faction meta and membership lists and dispatches events for membership/relationship changes.
+
+Key classes and concepts:
+- `FactionRegistry` — register and look up `FactionProfile` objects.
+- `FactionProfile` — id, display name, persistent metadata (tags, color).
+- `FactionMember` — membership record (ref, role, joinedAt).
+- `FactionRole` — ordered role enum (OWNER, OFFICER, MEMBER, RECRUIT).
+- `FactionRelationEvent` — dispatched when faction relations or membership change.
+
+Basic usage (downstream):
+
+1. Declare dependency in `manifest.json` as usual (see Downstream Integration Guide).
+2. Register a faction profile during your `setup()`:
+
+```java
+FactionRegistry factions = HeroCore.get().getFactionRegistry();
+factions.register(FactionProfile.builder()
+    .id("myplugin:bandits")
+    .displayName("Bandit Gang")
+    .build());
+```
+
+3. Add / remove members and query membership from your gameplay systems:
+
+```java
+factions.addMember("myplugin:bandits", playerRef, FactionRole.MEMBER);
+Optional<FactionProfile> p = factions.getProfile("myplugin:bandits");
+boolean isMember = factions.isMember(playerRef, "myplugin:bandits");
+```
+
+Notes:
+- The registry is thread-safe for normal ECS usage patterns; mutate factions via systems or initialization code.
+- Faction membership changes dispatch `FactionRelationEvent` through the ECS so other systems can react (chat tags, PvP rules).
+
+### Language API
+
+HeroCore includes a small Language API used by the in-project tests and text utilities. It provides translation lookups, training registry hooks for localized content, and a `TextDistortionEngine` for stylistic effects.
+
+Key classes and assets:
+- `LanguageService` — primary API: `translate(key, locale, placeholders...)`.
+- `TrainingRegistry` — registry for learning/teaching phrases used in tests and optional gameplay features.
+- `TextDistortionEngine` — utilities for obfuscation, leetspeak, and stylistic distortions used by tests (e.g., `TextDistortionEngineTest`).
+- Language packs live in `src/main/resources/hero-core-languages-default.json` and are loaded by default.
+
+Basic usage:
+
+```java
+LanguageService lang = HeroCore.get().getLanguageService();
+String welcome = lang.translate("ui.welcome", Locale.EN_US, Map.of("player", playerName));
+
+// Distort a string for an effect
+String spooky = HeroCore.get().getTextDistortionEngine().distort("Beware the forest", DistortionMode.GHOST);
+```
+
+Notes and guidance:
+- The service falls back to built-in language assets if no server pack is provided.
+- Keep translation keys simple and namespaced (e.g., `myplugin.item.sword.name`).
+- `TrainingRegistry` is useful if you need dynamic or procedurally generated phrases — see tests for usage patterns.
+
+---
+
 ## Planned Features
 
 These APIs exist as interface/class definitions but are **not yet wired** to Hytale's runtime. They are reserved for future versions.
