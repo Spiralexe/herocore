@@ -88,6 +88,7 @@ public class HeroCoreProgressionComponent implements Component<EntityStore> {
             .append(new KeyedCodec<>("HC_Profiles", Codec.STRING),
                     HeroCoreProgressionComponent::setProfilesEncoded,
                     HeroCoreProgressionComponent::getProfilesEncoded)
+            .add()
             .build();
 
     // ── API (per-profile) ──────────────────────────────────────────
