@@ -1,6 +1,5 @@
 package net.herotale.herocore.impl.leveling;
 
-import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -20,8 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Uses {@code Ref<EntityStore>} for all runtime operations — no UUID in the API.
  * Level/XP data is read from and written to {@link HeroCoreProgressionComponent}
- * on the entity. Level events are dispatched via {@code CommandBuffer.invoke()},
- * flowing through the native ECS event system.
+ * on the entity. Level events are dispatched via {@code store.invoke()}, flowing through the native ECS event system.
  */
 public class LevelingRegistryImpl implements LevelingRegistry {
 
@@ -52,8 +50,7 @@ public class LevelingRegistryImpl implements LevelingRegistry {
 
     @Override
     public void grantXP(Ref<EntityStore> entityRef, Store<EntityStore> store,
-                         CommandBuffer<EntityStore> cb, String profileId,
-                         double amount, XPSource source) {
+                        String profileId, double amount, XPSource source) {
         LevelingProfile profile = profiles.get(profileId);
         if (profile == null) {
             throw new IllegalArgumentException("Unknown leveling profile: " + profileId);
@@ -103,11 +100,11 @@ public class LevelingRegistryImpl implements LevelingRegistry {
         progression.setProgress(profileId, new HeroCoreProgressionComponent.ProfileProgressData(
                 newLevel, (float) currentXp, xpToNext));
 
-        // Fire level change events via CommandBuffer — flows through ECS event system
+        // Fire level change events via Store.invoke() (store takes a buffer internally).
         if (newLevel > oldLevel) {
-            cb.invoke(entityRef, new LevelUpEvent(profileId, oldLevel, newLevel));
+            store.invoke(entityRef, new LevelUpEvent(profileId, oldLevel, newLevel));
         } else if (newLevel < oldLevel) {
-            cb.invoke(entityRef, new LevelDownEvent(profileId, oldLevel, newLevel));
+            store.invoke(entityRef, new LevelDownEvent(profileId, oldLevel, newLevel));
         }
     }
 
